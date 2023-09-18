@@ -1,0 +1,18 @@
+Bulbistry
+
+The name comes from *Thomomys bulbivorus*, the scientific name for the Camas pocket gopher, and the fact that this implements an OCI-compliant container registry.
+
+The intention is to write a registry for (semi-)private small-scale use to be wrapped in a container.
+ONE container.
+Not 10.
+Because of that, these requirements are set:
+
+0) There is no **requirement** to use external services.
+1) If you want HTTPS security, wrap a reverse proxy around this server.
+2) The attached database is in SQLite format - no other databases are supported.
+3) This is implemented to the spec at https://github.com/opencontainers/distribution-spec/blob/main/spec.md, not to any specific program.
+
+This is also my attempt to learn how to program in Go, as I've found that the best way for myself to learn is to read, and then try.
+I've been programming in Perl for years, but I'm willing to try other languages.
+
+Because of that, this is a work-in-progress, and is woefully incomplete even as yet.
