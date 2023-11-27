@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strings"
 
 	"github.com/mattn/go-sqlite3"
 )
@@ -21,37 +22,34 @@ type Database struct {
 }
 
 type Blob struct {
-
 }
 
 type BlobLink struct {
-	
 }
 
 type Manifest struct {
-	ID int64
-	uuid string
-	namespace string
-	name string
-	sha string
+	ID           int64
+	uuid         string
+	namespace    string
+	name         string
+	sha          string
 	manifestBody string
 }
 
 type ManifestLink struct {
-	ID int64
-	uuid string
-	Namespace string
-	Name string
-	Tag string
+	ID          int64
+	uuid        string
+	Namespace   string
+	Name        string
+	Tag         string
 	ContentType string
-	Sha256 string
-	Sha512 string
+	Sha256      string
+	Sha512      string
 }
 
 func (ml *ManifestLink) Normalize() error {
 	return nil
 }
-
 
 func NewDatabase(bc BulbistryConfig) *Database {
 	db, err := sql.Open("sqlite3", bc.DatabaseFile)
@@ -73,12 +71,16 @@ func (r *Database) InitializeDatabase() error {
 	)`
 
 	_, err := r.db.Exec(query)
-	return err if err
+	if err != nil {
+		return err
+	}
 
 	query = "INSERT INTO tbv_dbversion (db_version) VALUES (?)"
 
 	_, err = r.db.Exec(query, DatabaseVersion())
-	return err if err
+	if err != nil {
+		return err
+	}
 
 	query = `
 	CREATE TABLE IF NOT EXISTS manifest_link (
@@ -87,14 +89,14 @@ func (r *Database) InitializeDatabase() error {
 		namespace TEXT NULL,
 		name TEXT NOT NULL,
 		tag TEXT NOT NULL,
+		tag_sortable TEXT NOT NULL,
 		content_type TEXT NOT NULL,
 		sha256 TEXT NOT NULL.
 		sha512 TEXT NOT NULL
 	)`
 
-	_, err := r.db.Exec(query)
-	return err if err
-
+	_, err = r.db.Exec(query)
+	return err
 }
 
 func (r *Database) MigrateDatabase() error {
@@ -105,11 +107,13 @@ func (r *Database) CreateManifestLink(ml ManifestLink) (*ManifestLink, error) {
 	query := `
 		INSERT
 		  INTO manifest_link
-			   (namespace, name, tag, context_type, sha256, sha512)
-		VALUES (        ?,    ?,   ?,            ?,      ?,      ?)
+			   (namespace, name, tag, tag_sortable, context_type, sha256, sha512)
+		VALUES (        ?,    ?,   ?,            ?,            ?,      ?,      ?)
 	`
 
-	res, err := r.db.Exec(query, ml.namespace, ml.name, ml.tag, ml.ContentType, ml.Sha256, ml.Sha512)
+	sortable := strings.ToLower(ml.Tag)
+
+	res, err := r.db.Exec(query, ml.Namespace, ml.Name, ml.Tag, sortable, ml.ContentType, ml.Sha256, ml.Sha512)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -129,17 +133,28 @@ func (r *Database) CreateManifestLink(ml ManifestLink) (*ManifestLink, error) {
 	return &ml, nil
 }
 
+func (r *Database) GetTags(name string, n int, last string) ([]string, error) {
+	//row := r.db.QueryRow(`
+	//	SELECT *
+	//	  FROM websites
+	//		 WHERE namespace = NULL
+	//		   AND name = ?
+	//		   AND tag  = ?
+	//	`, name, tag)
+
+}
+
 func (r *Database) GetManifestLink(name string, tag string) (*ManifestLink, error) {
 	row := r.db.QueryRow(`
 		SELECT *
-		  FROM websites
+		  FROM manifest_link
 		 WHERE namespace = NULL
 		   AND name = ?
 		   AND tag  = ?
 	`, name, tag)
 
 	var ml ManifestLink
-	if err := row.Scan(&ml.ID, &ml.uuid, &ml.namespace, &ml.name, &ml.tag, &ml.content_type, &ml.sha256, &ml.sha512); err != nil {
+	if err := row.Scan(&ml.ID, &ml.uuid, &ml.Namespace, &ml.Name, &ml.Tag, &ml.ContentType, &ml.Sha256, &ml.Sha512); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
@@ -153,7 +168,7 @@ func (r *Database) UpdateManifestLink(id int64, updated ManifestLink) (*Manifest
 		return nil, errors.New("invalid updated ID")
 	}
 
-	res, err := r.db.Exec("UPDATE manifest_link SET content_type = ?, sha = ? WHERE id = ?", updated.contentType, updated.sha, id)
+	res, err := r.db.Exec("UPDATE manifest_link SET content_type = ?, sha256 = ?, sha512 = ? WHERE id = ?", updated.ContentType, updated.Sha256, updated.Sha512, id)
 	if err != nil {
 		return nil, err
 	}

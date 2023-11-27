@@ -3,9 +3,11 @@ package bulbistry
 import (
 	"context"
 	"errors"
-	"fmt"
+	//"fmt"
 	"net/http"
-	"time"
+	//"strings"
+	"strconv"
+	//"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -62,41 +64,41 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func GetV2Check(w http.ResponseWriter, e *http.Request) {
+func GetV2Check(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func HeadRedirectManifest(w http.ResponseWriter, e *http.Request) {
-	vars := mux.Vars()
+func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
+	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
-	commonRedirectManifest(0, manifest)
+	// commonRedirectManifest(0, manifest)
 }
 
-func HeadRedirectNamespacedManifest(w http.ResponseWriter, e *http.Request) {
-	vars := mux.Vars()
+func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
-	commonRedirectManifest(0, manifest)
+	// commonRedirectManifest(0, manifest)
 }
 
-func GetRedirectManifest(w http.ResponseWriter, e *http.Request) {
-	vars := mux.Vars()
+func GetRedirectManifest(w http.ResponseWriter, r *http.Request) {
+	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
-	commonRedirectManifest(1, manifest)
+	// commonRedirectManifest(1, manifest)
 }
 
-func GetRedirectNamespacedManifest(w http.ResponseWriter, e *http.Request) {
-	vars := mux.Vars()
+func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
-	commonRedirectManifest(1, manifest)
+	// commonRedirectManifest(1, manifest)
 }
 
-func commonRedirectManifest(hasBody bool, manifest, url string, w http.ResponseWriter) {
-	if (manifest) {
-		w.Header().Set("ETag", '"' + manifest.sha + '"')
-		w.Header().Set("Content-Type", manifest.ct)
-		w.Header().Set("Docker-Content-Digest", manifest.sha)
+func commonRedirectManifest(hasBody bool, ml ManifestLink, url string, w http.ResponseWriter) {
+	if ml {
+		//		w.Header().Set("ETag", """ + ml.Sha256 + """)
+		w.Header().Set("Content-Type", ml.ContentType)
+		w.Header().Set("Docker-Content-Digest", ml.Sha256)
 		if hasBody {
 			w.Header().Set("Location", url)
 			w.WriteHeader(http.StatusPermanentRedirect)
@@ -108,6 +110,49 @@ func commonRedirectManifest(hasBody bool, manifest, url string, w http.ResponseW
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
+
+func GetTags(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		// kick out with a 500 error.
+	}
+
+	ctx := r.Context()
+	f := ctx.Value(ConfigKey)
+	if f == nil {
+		// Kick out with a 500 error
+	}
+
+	bc, ok := f.(BulbistryConfig)
+	if !ok {
+		w.Write(ConfigError(errors.New("Configuration not loadable")))
+		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	nStr := r.FormValue("n")
+	var n int
+	if nStr != "" {
+		n, err = strconv.Atoi(nStr)
+		if err != nil {
+			// Kick out with a 500 error
+		}
+	}
+
+	vars := mux.Vars(r)
+	db := NewDatabase(bc)
+	db.GetTags(vars["manifestName"], n, r.FormValue("last"))
+	// Print out JSON tag list
+}
+
+func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
+	//	vars := mux.Vars(r)
+
+	// Get manifest SHA and content type based on request parameters
+	// Print out JSON tag list
+}
+
+// Routines up to this point are at least psuedocoded
 
 func GetManifest(w http.ResponseWriter, e *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
@@ -129,37 +174,37 @@ func StoreInProgressUpload(namespace *string, name string, nano string) {
 
 }
 
-func PostBlobUpload(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		// kick out with a 500 error.
-	}
-
-	ctx := r.Context()
-	f := ctx.Value(ConfigKey)
-	if f == nil {
-		// Kick out with a 500 error
-	}
-
-	bc, ok := f.(BulbistryConfig)
-	if !ok {
-		w.Write(ConfigError(errors.New("Configuration not loadable")))
-		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
-		return
-	}
-
-	vars := mux.Vars(r)
-	name := vars["manifestName"]
-
-	key := fmt.Sprint(time.Now().UnixNano())
-
-	StoreInProgressUpload(nil, name, key)
-
-	blobUUID, _ := GenerateBlobUUID(bc, name, key)
-
-	w.Header().Set("Location", UploadLocation(nil, name, blobUUID))
-	w.WriteHeader(http.StatusAccepted)
-}
+//func PostBlobUpload(w http.ResponseWriter, r *http.Request) {
+//	err := r.ParseForm()
+//	if err != nil {
+//		// kick out with a 500 error.
+//	}
+//
+//	ctx := r.Context()
+//	f := ctx.Value(ConfigKey)
+//	if f == nil {
+//		// Kick out with a 500 error
+//	}
+//
+//	bc, ok := f.(BulbistryConfig)
+//	if !ok {
+//		w.Write(ConfigError(errors.New("Configuration not loadable")))
+//		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+//		return
+//	}
+//
+//	vars := mux.Vars(r)
+//	name := vars["manifestName"]
+//
+//	key := fmt.Sprint(time.Now().UnixNano())
+//
+//	StoreInProgressUpload(nil, name, key)
+//
+//	blobUUID, _ := GenerateBlobUUID(bc, name, key)
+//
+//	w.Header().Set("Location", UploadLocation(nil, name, blobUUID))
+//	w.WriteHeader(http.StatusAccepted)
+//}
 
 func PostNamespacedBlobUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)

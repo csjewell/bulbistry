@@ -2,6 +2,7 @@ package bulbistry
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -10,38 +11,40 @@ import (
 )
 
 type Logger struct {
-	logUUID uuid.UUID
+	logUUID *uuid.UUID
 	*log.Logger
 }
 
-func NewLogger(w io.Writer, *logUUID uuid.UUID) Logger {
+func NewLogger(w io.Writer, logUUID *uuid.UUID) *Logger {
 	if w == nil {
 		w = os.Stderr
 	}
 	if logUUID == nil {
-		logUUID = uuid.New()
+		u := uuid.New()
+		logUUID = &u
 	}
 	prefix := "[" + logUUID.String() + "] "
+	l := log.New(w, prefix, log.Ldate|log.Ltime|log.Lmsgprefix)
 	return &Logger{
 		logUUID,
-		log.New(w, prefix, log.Ldate | log.Ltime | log.Lmsgprefix)
+		l,
 	}
 }
 
 type DebugLogger struct {
-	activated bool
+	activated   bool
 	deactivated bool
 	*bytes.Buffer
 	*Logger
 }
 
-func NewDebugLogger(l Logger) DebugLogger {
-	buf := bytes.NewBuffer(make([]bytes, 0, 8192))
+func NewDebugLogger(l Logger) *DebugLogger {
+	buf := bytes.NewBuffer(make([]byte, 0, 8192))
 	return &DebugLogger{
 		false,
 		false,
 		buf,
-		NewLogger(buf, l.logUUID)
+		NewLogger(buf, l.logUUID),
 	}
 }
 
@@ -59,7 +62,7 @@ func (dl *DebugLogger) TurnOn() error {
 		return err
 	}
 	dl.SetOutput(os.Stdout)
-	dl.activated = true;
+	dl.activated = true
 	return nil
 }
 
@@ -73,7 +76,7 @@ func (dl *DebugLogger) TurnOff() error {
 	}
 
 	dl.Truncate(0)
-	dl.SetOutput(io.Discard())
+	dl.SetOutput(io.Discard)
 	dl.deactivated = true
 	return nil
 }
@@ -85,5 +88,3 @@ func (dl *DebugLogger) Handled() bool {
 
 	return false
 }
-
-

@@ -184,6 +184,9 @@ func RunServer(ctx *cli.Context) error {
 
 	// Path to implement for Content Discovery
 	// GET /v2/<name>/tags/list (returns JSON)
+	s.HandleFunc("/{manifestName}/tags/list", tbv.GetTags).Methods(http.MethodGet)
+	s.HandleFunc("/{namespace}/{manifestName}/tags/list", tbv.GetNamespacedTags).Methods(http.MethodGet)
+
 
 	// Path to implement content deletion
 	// DELETE /v2/<name>/manifests/<tag>    // tags

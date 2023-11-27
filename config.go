@@ -1,7 +1,7 @@
 package bulbistry
 
 import (
-	"error"
+	"errors"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -22,22 +22,22 @@ type BulbistryConfig_ListenOn struct {
 }
 
 type BulbistryConfig struct {
-	ExternalUrl BulbistryConfig_URL `yaml:"external_url,inline"`
-	BlobUrl     BulbistryConfig_URL `yaml:"blob_url,inline"`
-	ListenOn    BulbistryConfig_ListenOn `yaml:"listen_on,inline"`
-	BlobIsProxied bool `yaml:"is_proxied"`
-	DatabaseFile string `yaml:"database_file"`
-	HTPasswdFile string `yaml:"htpasswd_file"`
-	BlobDirectory string `yaml:"blob_directory"`
+	ExternalUrl   BulbistryConfig_URL      `yaml:"external_url,inline"`
+	BlobUrl       BulbistryConfig_URL      `yaml:"blob_url,inline"`
+	ListenOn      BulbistryConfig_ListenOn `yaml:"listen_on,inline"`
+	BlobIsProxied bool                     `yaml:"is_proxied"`
+	DatabaseFile  string                   `yaml:"database_file"`
+	HTPasswdFile  string                   `yaml:"htpasswd_file"`
+	BlobDirectory string                   `yaml:"blob_directory"`
 }
 
 type bulbistryConfigError struct {
 	configKey string
-	*error.Error
+	error
 }
 
 func NewConfigError(key, err string) bulbistryConfigError {
-	return &bulbistryConfigError{ key, error.New(err + ": " + key) }
+	return bulbistryConfigError{key, errors.New(err + ": " + key)}
 }
 
 func (bc BulbistryConfig) GetExternalUrl() string {
@@ -72,7 +72,7 @@ func ReadConfig(filename string) (*BulbistryConfig, error) {
 		bc.ListenOn.Port = 28080
 	}
 
-	if bc.ListenOn.IP == 0 {
+	if bc.ListenOn.IP == "" {
 		bc.ListenOn.IP = "127.0.0.1"
 	}
 
