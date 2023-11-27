@@ -1,57 +1,77 @@
+// The command bulbistry implements a minimal compliant OCI container registry
+// suitable for self-hosting in containers.
 package main
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
-//    "database/sql"
 
-//    tbv "git.curtisjewell.dev/bulbistry/bulbistry"
-	"github.com/urfave/cli/v2"
+	tbv "github.com/csjewell/bulbistry"
 	"github.com/gorilla/mux"
-//	"github.com/tg123/go-htpasswd"
+	htpasswd "github.com/tg123/go-htpasswd"
+	"github.com/urfave/cli/v2"
 )
 
-// github.com/google/uuid
+var authorizer   htpasswd.File
+var config       tbv.BulbistryConfig
+var executionLog tbv.Logger
+var db           tbv.Database
+var mux          *mux.Router
 
-// var ht htpasswd
-
-func CreateConfig (ctx *cli.Context) error {
-    return fmt.Errorf("Not Implemented")
+func CreateConfig(ctx *cli.Context) error {
+	return fmt.Errorf("Not Implemented")
 }
 
-func InitializeDatabase (ctx *cli.Context) error {
-    return fmt.Errorf("Not Implemented")
+func InitializeDatabase(ctx *cli.Context) error {
+	return fmt.Errorf("Not Implemented")
 }
 
-func MigrateDatabase (ctx *cli.Context) error {
-    return fmt.Errorf("Not Implemented")
+func MigrateDatabase(ctx *cli.Context) error {
+	return fmt.Errorf("Not Implemented")
 }
 
 func main() {
+	executionLog = NewLogger()
+	debugLog := NewDebugLogger(executionLog)
+	debugLog.Print("Bulbistry started")
 
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("%s\n", c.App.Version)
 	}
 
 	app := &cli.App{
-		Name:     "Bulbistry",
-		HelpName: "A pared-down container registry, perfect for self-hosting",
-		Authors:  []*cli.Author{ { Name: "Curtis Jewell", Email: "swordsman@curtisjewell.name", } },
-		Copyright: "Copyright (c) 2003 Curtis Jewell",
-		//Version:  tbv.FormatVersion(),
-		Action:   func (c *cli.Context) error { return RunServer(c) },
-		Flags:    []cli.Flag{
+		Name:      "Bulbistry",
+		HelpName:  "A pared-down container registry, perfect for self-hosting",
+		Authors:   []*cli.Author{{Name: "Curtis Jewell", Email: "swordsman@curtisjewell.name"}},
+		Copyright: "Copyright (c) 2023 Curtis Jewell",
+		Version:   tbv.Version(),
+		Action:    func(c *cli.Context) error { return RunServer(c) },
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "debug",
+				Aliases: []string{"d"},
+				Value:   false,
+				Usage:   "Turns on debug logging",
+				Action:  func(c *cli.Context, b bool) error {
+					if b {
+						return debugLog.TurnOn()
+					} else {
+						return debugLog.TurnOff()
+					}
+				},
+			},
 			&cli.BoolFlag{
 				Name:   "create-config",
 				Value:  false,
 				Usage:  "Generate a basic configuration",
-                Action: func (c *cli.Context, b bool) error {
-					if b { return nil }
+				Action: func(c *cli.Context, b bool) error {
+					if b {
+						return nil
+					}
 					return CreateConfig(c)
 				},
 			},
@@ -59,8 +79,10 @@ func main() {
 				Name:   "init-db",
 				Value:  false,
 				Usage:  "Initialize application database",
-                Action: func (c *cli.Context, b bool) error {
-					if b { return nil }
+				Action: func(c *cli.Context, b bool) error {
+					if b {
+						return nil
+					}
 					return InitializeDatabase(c)
 				},
 			},
@@ -68,18 +90,20 @@ func main() {
 				Name:   "migrate-db",
 				Value:  false,
 				Usage:  "Migrate the database",
-                Action: func (c *cli.Context, b bool) error {
-					if b { return nil }
+				Action: func(c *cli.Context, b bool) error {
+					if b {
+						return nil
+					}
 					return MigrateDatabase(c)
 				},
 			},
 			&cli.StringFlag{
 				Name:      "config",
-				Aliases:   []string{"c"}, 
+				Aliases:   []string{"c"},
 				Value:     "bulbistry.yml",
 				Usage:     "Load configuration from FILE",
 				TakesFile: true,
-				EnvVars:   []string{"BULBISTRY_CONFIG"}, 
+				EnvVars:   []string{"BULBISTRY_CONFIG"},
 			},
 		},
 	}
@@ -91,52 +115,74 @@ func main() {
 	}
 }
 
-func RunServer (ctx *cli.Context) error {
-
-    if ctx.Bool("create-config") {
+func RunServer(ctx *cli.Context) error {
+	// If we have performed any other action, do not start the server.
+	if ctx.Bool("create-config") || ctx.Bool("init-db") || ctx.Bool("migrate-db") {
+		if !dl.Handled() {
+			debugLog.TurnOff()
+			return nil
+		}
+		debugLog.Print("Bulbistry finished")
 		return nil
 	}
 
-	if ctx.Bool("init-db") {
-		return nil
+	config, err := tbv.ReadConfig(ctx.String("config"))
+	if err != nil {
+		executionLog.Fatal(err.Error())
 	}
 
-	if ctx.Bool("migrate-db") {
-		return nil
+	var needAuth bool
+	if (config.HTPasswdFile) {
+		authorizer = htpasswd.New(config.HTPasswdFile, htpasswd.DefaultSystems, nil)
+		needAuth = true
+	} else {
+		needAuth = false
 	}
-
-	fmt.Println("Read configuration file")
-//	bc, err := tbv.readConfig()
-
-	fmt.Println("Start server")
-
-//	ht = htpasswd.New(bc.HTPasswdFile, htpasswd.DefaultSystems, nil)
 
 	r := mux.NewRouter()
-	r.Use()
-	// r.Use(mux.CORSMethodMiddleware(r))
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://example.com")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+	}).Methods(http.MethodOptions)
+	r.Use(mux.CORSMethodMiddleware(r))
+	s := r.PathPrefix("/v2").Subrouter()
+	ba := tbv.NewBasicAuthMiddleware(needAuth, authorizer)
+	s.Use(ba.Middleware)
 
-//	s := r.PathPrefix("/v2").Subrouter()
+	s.HandleFunc("/", tbv.GetV2Check).Methods(http.MethodGet)
 
-//	s.HandleFunc("/", tbv.V2Handler)
+	s.HandleFunc("/{manifestName}/manifests/{reference:sha256:[0-9a-fA-F]+}", tbv.HeadManifest).Methods(http.MethodHead)
+	s.HandleFunc("/{namespace}/{manifestName}/manifests/{reference:sha256:[0-9a-fA-F]+}", tbv.HeadNamespacedManifest).Methods(http.MethodHead)
+
+	s.HandleFunc("/{manifestName}/manifests/{reference:sha256:[0-9a-fA-F]+}", tbv.GetManifest).Methods(http.MethodGet).Name("Manifest")
+	s.HandleFunc("/{namespace}/{manifestName}/manifests/{reference:sha256:[0-9a-fA-F]+}", tbv.GetNamespacedManifest).Methods(http.MethodGet).Name("NamespacedManifest")
+
+	s.HandleFunc("/{manifestName}/manifests/{reference}", tbv.HeadRedirectManifest).Methods(http.MethodHead)
+	s.HandleFunc("/{namespace}/{manifestName}/manifests/{reference}", tbv.HeadRedirectNamespacedManifest).Methods(http.MethodHead)
+
+	s.HandleFunc("/{manifestName}/manifests/{reference}", tbv.GetRedirectManifest).Methods(http.MethodGet)
+	s.HandleFunc("/{namespace}/{manifestName}/manifests/{reference}", tbv.GetRedirectNamespacedManifest).Methods(http.MethodGet)
 
 	// Paths to implement for pulling:
-    // GET /v2/<name>/manifests/<reference>
+	// GET /v2/<name>/manifests/<reference> *
 	// GET /v2/<name>/blobs/<digest>
-    // HEAD /v2/<name>/manifests/<reference>
+	// HEAD /v2/<name>/manifests/<reference>
 	// HEAD /v2/<name>/blobs/<digest>
+
+	s.HandleFunc("/{manifestName}/blobs/uploads", tbv.PostBlobUpload).Methods(http.MethodPost)
+	s.HandleFunc("/{namespace}/{manifestName}/blobs/uploads", tbv.PostNamespacedBlobUpload).Methods(http.MethodPost)
 
 	// Paths to implement for pushing blobs
 	// POST /v2/<name>/blobs/uploads/ returns 202 Accepted, and header Location: <location>
 	// Then a PUT to <location>?digest=<digest> that returns 201 Created with Location: <blob URL>
-	// OR POST /v2/<name>/blobs/uploads/?digest=<digest> (or can return a 202 Accepted as above to require the PUT)  
-    // OR POST-PATCH-PUT format.
-    // Or mount from another <name> if we know it.
+	// OR POST /v2/<name>/blobs/uploads/?digest=<digest> (or can return a 202 Accepted as above to require the PUT)
+	// OR POST-PATCH-PUT format.
+	// Or mount from another <name> if we know it.
 
 	// Path to implement for pushing manifests
 	// PUT /v2/<name>/manifests/<reference>
 
-    // Path to implement for Content Discovery
+	// Path to implement for Content Discovery
 	// GET /v2/<name>/tags/list (returns JSON)
 
 	// Path to implement content deletion
@@ -144,27 +190,28 @@ func RunServer (ctx *cli.Context) error {
 	// DELETE /v2/<name>/manifests/<digest> // manifests
 	// DELETE /v2/<name>/blobs/<digest>     // blobs
 
-	r.HandleFunc("/", handlerNotFound)
-	http.Handle("/", r)
+	r.HandleFunc("/", handlerNotFound).Methods(http.MethodGet, http.MethodPost, http.MethodHead)
 
 	svr := &http.Server{
-		Addr:           ":8080",
-		ReadTimeout:    10 * time.Second,
+		Handler:        r,
+		Addr:           config.GetListenOn(),
+		ReadTimeout:    120 * time.Second,
 		WriteTimeout:   10 * time.Second,
+		IdleTimeout:    120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 		BaseContext:    htcontext,
 	}
 
-	log.Fatal(svr.ListenAndServe());
-	return nil;
+	log.Fatal(svr.ListenAndServe())
+	return nil
 }
 
-func htcontext (l net.Listener) context.Context { 
-	ctx := context.Background()
-//	ctx = ctx.WithValue(tbv.HTPasswordKey, ht)
-    return ctx;
+func htcontext(l net.Listener) context.Context {
+	ctx := context.WithValue(context.Background(), tbv.ConfigKey, config)
+	return ctx
 }
 
-func handlerNotFound(_ http.ResponseWriter, _ *http.Request) {
-    return
+func handlerNotFound(w http.ResponseWriter, r *http.Request) {
+	http.NotFound(w, r)
+	return
 }
