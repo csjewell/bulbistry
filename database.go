@@ -36,7 +36,7 @@ type Manifest struct {
 	manifestBody string
 }
 
-type ManifestLink struct {
+type ManifestTag struct {
 	ID          int64
 	uuid        string
 	Namespace   string
@@ -47,7 +47,7 @@ type ManifestLink struct {
 	Sha512      string
 }
 
-func (ml *ManifestLink) Normalize() error {
+func (mt *ManifestTag) Normalize() error {
 	return nil
 }
 
@@ -83,7 +83,7 @@ func (r *Database) InitializeDatabase() error {
 	}
 
 	query = `
-	CREATE TABLE IF NOT EXISTS manifest_link (
+	CREATE TABLE IF NOT EXISTS manifest_tags (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		uuid TEXT NOT NULL UNIQUE,
 		namespace TEXT NULL,
@@ -103,17 +103,16 @@ func (r *Database) MigrateDatabase() error {
 	return nil
 }
 
-func (r *Database) CreateManifestLink(ml ManifestLink) (*ManifestLink, error) {
+func (r *Database) CreateManifestLink(mt ManifestTag) (*ManifestTag, error) {
 	query := `
 		INSERT
-		  INTO manifest_link
+		  INTO manifest_tags
 			   (namespace, name, tag, tag_sortable, context_type, sha256, sha512)
 		VALUES (        ?,    ?,   ?,            ?,            ?,      ?,      ?)
 	`
 
-	sortable := strings.ToLower(ml.Tag)
-
-	res, err := r.db.Exec(query, ml.Namespace, ml.Name, ml.Tag, sortable, ml.ContentType, ml.Sha256, ml.Sha512)
+	sortable := strings.ToLower(mt.Tag)
+	res, err := r.db.Exec(query, mt.Namespace, mt.Name, mt.Tag, sortable, mt.ContentType, mt.Sha256, mt.Sha512)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) {
@@ -128,47 +127,96 @@ func (r *Database) CreateManifestLink(ml ManifestLink) (*ManifestLink, error) {
 	if err != nil {
 		return nil, err
 	}
-	ml.ID = id
+	mt.ID = id
 
-	return &ml, nil
+	return &mt, nil
 }
 
 func (r *Database) GetTags(name string, n int, last string) ([]string, error) {
-	//row := r.db.QueryRow(`
-	//	SELECT *
-	//	  FROM websites
-	//		 WHERE namespace = NULL
-	//		   AND name = ?
-	//		   AND tag  = ?
-	//	`, name, tag)
+	query := `
+		SELECT tag
+		  FROM manifest_tags
+		 WHERE namespace = NULL
+		   AND name = ?
+		`
 
+	if last != "" {
+		query += `   AND sortable_tag > ?
+			`
+	}
+
+	query += " ORDER BY sortable_tag "
+
+	var rows *sql.Rows
+	var err error
+	if n != 0 {
+		query += " LIMIT ?"
+		if last != "" {
+			rows, err = r.db.Query(query, name, last, n)
+		} else {
+			rows, err = r.db.Query(query, name, n)
+		}
+	} else {
+		if last != "" {
+			rows, err = r.db.Query(query, name, last)
+		} else {
+			rows, err = r.db.Query(query, name)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return r.getColumn(rows, n)
 }
 
-func (r *Database) GetManifestLink(name string, tag string) (*ManifestLink, error) {
+func (r *Database) getColumn(rows *sql.Rows, n int) ([]string, error) {
+	var answer []string
+	if n != 0 {
+		answer = make([]string, n)
+	} else {
+		answer = make([]string, 16)
+	}
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		answer = append(answer, name)
+	}
+
+	return answer, nil
+}
+
+func (r *Database) GetManifestTag(name string, tag string) (*ManifestTag, error) {
 	row := r.db.QueryRow(`
 		SELECT *
-		  FROM manifest_link
+		  FROM manifest_tag
 		 WHERE namespace = NULL
 		   AND name = ?
 		   AND tag  = ?
 	`, name, tag)
 
-	var ml ManifestLink
-	if err := row.Scan(&ml.ID, &ml.uuid, &ml.Namespace, &ml.Name, &ml.Tag, &ml.ContentType, &ml.Sha256, &ml.Sha512); err != nil {
+	var mt ManifestTag
+	if err := row.Scan(&mt.ID, &mt.uuid, &mt.Namespace, &mt.Name, &mt.Tag, &mt.ContentType, &mt.Sha256, &mt.Sha512); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
 		return nil, err
 	}
-	return &ml, nil
+	return &mt, nil
 }
 
-func (r *Database) UpdateManifestLink(id int64, updated ManifestLink) (*ManifestLink, error) {
+func (r *Database) UpdateManifestTag(id int64, mt ManifestTag) (*ManifestTag, error) {
 	if id == 0 {
 		return nil, errors.New("invalid updated ID")
 	}
 
-	res, err := r.db.Exec("UPDATE manifest_link SET content_type = ?, sha256 = ?, sha512 = ? WHERE id = ?", updated.ContentType, updated.Sha256, updated.Sha512, id)
+	query := "UPDATE manifest_tag SET content_type = ?, sha256 = ?, sha512 = ? WHERE id = ?"
+	res, err := r.db.Exec(query, mt.ContentType, mt.Sha256, mt.Sha512, id)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +230,7 @@ func (r *Database) UpdateManifestLink(id int64, updated ManifestLink) (*Manifest
 		return nil, ErrUpdateFailed
 	}
 
-	return &updated, nil
+	return &mt, nil
 }
 
 //func (r *Database) Delete(id int64) error {

@@ -38,7 +38,7 @@ type DebugLogger struct {
 	*Logger
 }
 
-func NewDebugLogger(l Logger) *DebugLogger {
+func NewDebugLogger(l *Logger) *DebugLogger {
 	buf := bytes.NewBuffer(make([]byte, 0, 8192))
 	return &DebugLogger{
 		false,

@@ -23,10 +23,10 @@ const (
 
 type BasicAuth struct {
 	authRequired bool
-	authorizer   htpasswd.File
+	authorizer   *htpasswd.File
 }
 
-func NewBasicAuthMiddleware(authRequired bool, authorizer htpasswd.File) BasicAuth {
+func NewBasicAuthMiddleware(authRequired bool, authorizer *htpasswd.File) BasicAuth {
 	return BasicAuth{
 		authRequired: authRequired,
 		authorizer:   authorizer,
@@ -94,11 +94,11 @@ func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
 	// commonRedirectManifest(1, manifest)
 }
 
-func commonRedirectManifest(hasBody bool, ml ManifestLink, url string, w http.ResponseWriter) {
-	if ml {
-		//		w.Header().Set("ETag", """ + ml.Sha256 + """)
-		w.Header().Set("Content-Type", ml.ContentType)
-		w.Header().Set("Docker-Content-Digest", ml.Sha256)
+func commonRedirectManifest(hasBody bool, mt ManifestTag, url string, w http.ResponseWriter) {
+	if mt.ID != 0 {
+		w.Header().Set("ETag", `"`+mt.Sha256+`"`)
+		w.Header().Set("Content-Type", mt.ContentType)
+		w.Header().Set("Docker-Content-Digest", mt.Sha256)
 		if hasBody {
 			w.Header().Set("Location", url)
 			w.WriteHeader(http.StatusPermanentRedirect)
