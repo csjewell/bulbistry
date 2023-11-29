@@ -14,6 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// CreateConfig creates the bulbistry configuration in an interactive fashion.
 func CreateConfig(ctx *cli.Context) error {
 
 	validateFile := func(input string) error {

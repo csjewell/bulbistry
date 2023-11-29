@@ -1,4 +1,4 @@
-Bulbistry
+# Bulbistry
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/csjewell/bulbistry)](https://goreportcard.com/report/github.com/csjewell/bulbistry)
 
@@ -11,7 +11,7 @@ Because of that, these requirements are set:
 
 0) There is no **requirement** to use external services.
 1) If you want HTTPS security, wrap a reverse proxy around this server.
-2) The attached database is in SQLite format - no other databases are supported.
+2) The attached database is in SQLite format - no other databases will be supported until it DOES pass the spec.
 3) Local storage only - if you want to hook up S3 or some other storage service, do it outside of this container.
 4) This is implemented to the spec at https://github.com/opencontainers/distribution-spec/blob/main/spec.md, not to any specific program.
 5) This is not a mirror. However, once it DOES pass the spec, we can talk about mirroring.
