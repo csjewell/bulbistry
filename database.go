@@ -18,7 +18,7 @@ var (
 
 type Database struct {
 	db *sql.DB
-	bc BulbistryConfig
+	cfg Config
 }
 
 type Blob struct {
@@ -51,8 +51,8 @@ func (mt *ManifestTag) Normalize() error {
 	return nil
 }
 
-func NewDatabase(bc BulbistryConfig) *Database {
-	db, err := sql.Open("sqlite3", bc.DatabaseFile)
+func NewDatabase(cfg Config) *Database {
+	db, err := sql.Open("sqlite3", cfg.DatabaseFile)
 
 	if err != nil {
 		log.Fatal(err)
@@ -60,7 +60,7 @@ func NewDatabase(bc BulbistryConfig) *Database {
 
 	return &Database{
 		db: db,
-		bc: bc,
+		cfg: cfg,
 	}
 }
 

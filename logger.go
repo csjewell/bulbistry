@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Bulbistry's extension of log.Logger to include the UUID in the logs.
 type Logger struct {
 	logUUID *uuid.UUID
 	*log.Logger
@@ -31,6 +32,7 @@ func NewLogger(w io.Writer, logUUID *uuid.UUID) *Logger {
 	}
 }
 
+// A logger at debugging level.
 type DebugLogger struct {
 	activated   bool
 	deactivated bool

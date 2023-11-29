@@ -1,34 +1,40 @@
+// The code that handles and stores the configuration for Bulbistry
 package bulbistry
 
 import (
 	"errors"
+	//"net/url"
 	"os"
 
-	"gopkg.in/yaml.v3"
+	yaml "github.com/goccy/go-yaml"
 )
 
 // Note: struct fields must be public in order for unmarshal to
 // correctly populate the data.
-type BulbistryConfig_URL struct {
+
+
+type ConfigURL struct {
 	Scheme    string `yaml:"scheme"`
 	HostName  string `yaml:"hostname"`
-	Port      int    `yaml:"port"`
-	Directory string `yaml:"dir"`
+	Port      int    `yaml:"port,omitempty"`
+	Path      string `yaml:"path"`
 }
 
-type BulbistryConfig_ListenOn struct {
+type ConfigListenOn struct {
 	IP   string `yaml:"ip"`
 	Port int    `yaml:"port"`
 }
 
-type BulbistryConfig struct {
-	ExternalUrl   BulbistryConfig_URL      `yaml:"external_url,inline"`
-	BlobUrl       BulbistryConfig_URL      `yaml:"blob_url,inline"`
-	ListenOn      BulbistryConfig_ListenOn `yaml:"listen_on,inline"`
-	BlobIsProxied bool                     `yaml:"is_proxied"`
-	DatabaseFile  string                   `yaml:"database_file"`
-	HTPasswdFile  string                   `yaml:"htpasswd_file"`
-	BlobDirectory string                   `yaml:"blob_directory"`
+// A Config variable contains the bulbistry configuration
+type Config struct {
+	Version       string         `yaml:"version"`
+	ExternalURL   ConfigURL      `yaml:"external_url"`
+	BlobURL       ConfigURL      `yaml:"blob_url"`
+	ListenOn      ConfigListenOn `yaml:"listen_on"`
+	BlobIsProxied bool           `yaml:"is_proxied"`
+	DatabaseFile  string         `yaml:"database_file"`
+	HTPasswdFile  string         `yaml:"htpasswd_file"`
+	BlobDirectory string         `yaml:"blob_directory"`
 }
 
 type bulbistryConfigError struct {
@@ -36,75 +42,96 @@ type bulbistryConfigError struct {
 	error
 }
 
-func NewConfigError(key, err string) bulbistryConfigError {
+func newConfigError(key, err string) bulbistryConfigError {
 	return bulbistryConfigError{key, errors.New(err + ": " + key)}
 }
 
-func (bc BulbistryConfig) GetExternalUrl() string {
-	return bc.ExternalUrl.Scheme + "://" + bc.ExternalUrl.HostName + ":" + string(bc.ExternalUrl.Port) + "/v2/"
+// GetExternalURL gets the registry's base URL
+func (cfg Config) GetExternalURL() string {
+	return cfg.ExternalURL.Scheme + "://" + cfg.ExternalURL.HostName + ":" + string(cfg.ExternalURL.Port) + "/v2/"
 }
 
-func (bc BulbistryConfig) GetBlobUrl() string {
-	return bc.ExternalUrl.Scheme + "://" + bc.ExternalUrl.HostName + ":" + string(bc.ExternalUrl.Port) + "/v2/"
+// GetBlobURL gets the blob storage base URL.
+func (cfg Config) GetBlobURL() string {
+	return cfg.ExternalURL.Scheme + "://" + cfg.ExternalURL.HostName + ":" + string(cfg.ExternalURL.Port) + "/v2/"
 }
 
-func (bc BulbistryConfig) GetListenOn() string {
-	return bc.ListenOn.IP + ":" + string(bc.ListenOn.Port)
+// GetListenOn gets the IP and port that the registry is configured to listen on
+func (cfg Config) GetListenOn() string {
+	return cfg.ListenOn.IP + ":" + string(cfg.ListenOn.Port)
 }
 
-func ReadConfig(filename string) (*BulbistryConfig, error) {
+// SaveConfig saves the current configuration to a YAML file.
+func (cfg Config) SaveConfig(filename string) error {
+	cfg.Version = Version()
+
+	yml, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filename, []byte(yml), 0640)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ReadConfig reads the current configuration from a YAML file
+func ReadConfig(filename string) (*Config, error) {
 	yml, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var bc BulbistryConfig
-	err = yaml.Unmarshal([]byte(yml), &bc)
+	var cfg Config
+	err = yaml.Unmarshal([]byte(yml), &cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if bc.DatabaseFile == "" {
-		return nil, NewConfigError("database_file", "configuration entry required")
+	if cfg.DatabaseFile == "" {
+		return nil, newConfigError("database_file", "configuration entry required")
 	}
 
-	if bc.ListenOn.Port == 0 {
-		bc.ListenOn.Port = 28080
+	if cfg.ListenOn.Port == 0 {
+		cfg.ListenOn.Port = 28080
 	}
 
-	if bc.ListenOn.IP == "" {
-		bc.ListenOn.IP = "127.0.0.1"
+	if cfg.ListenOn.IP == "" {
+		cfg.ListenOn.IP = "127.0.0.1"
 	}
 
-	if bc.ExternalUrl.HostName == "" {
-		return nil, NewConfigError("hostname", "configuration entry required")
+	if cfg.ExternalURL.HostName == "" {
+		return nil, newConfigError("hostname", "configuration entry required")
 	}
 
-	if bc.ExternalUrl.Port == 0 {
-		bc.ExternalUrl.Port = 80
+	if cfg.ExternalURL.Port == 0 {
+		cfg.ExternalURL.Port = 80
 	}
 
-	if bc.ExternalUrl.Scheme == "" {
-		bc.ExternalUrl.Scheme = "http"
+	if cfg.ExternalURL.Scheme == "" {
+		cfg.ExternalURL.Scheme = "http"
 	}
 
-	if bc.BlobIsProxied {
-		if bc.BlobUrl.HostName == "" {
-			return nil, NewConfigError("hostname", "configuration entry required")
+	if cfg.BlobIsProxied {
+		if cfg.BlobURL.HostName == "" {
+			return nil, newConfigError("hostname", "configuration entry required")
 		}
 	} else {
-		if bc.BlobUrl.HostName == "" {
-			bc.BlobUrl.HostName = bc.ExternalUrl.HostName
+		if cfg.BlobURL.HostName == "" {
+			cfg.BlobURL.HostName = cfg.ExternalURL.HostName
 		}
 	}
 
-	if bc.BlobUrl.Port == 0 {
-		bc.ExternalUrl.Port = 80
+	if cfg.BlobURL.Port == 0 {
+		cfg.ExternalURL.Port = 80
 	}
 
-	if bc.ExternalUrl.Scheme == "" {
-		bc.ExternalUrl.Scheme = "http"
+	if cfg.ExternalURL.Scheme == "" {
+		cfg.ExternalURL.Scheme = "http"
 	}
 
-	return &bc, nil
+	return &cfg, nil
 }

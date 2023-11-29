@@ -16,11 +16,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var authorizer *htpasswd.File
-var config tbv.BulbistryConfig
+var authorizer   *htpasswd.File
 var executionLog *tbv.Logger
-var debugLog *tbv.DebugLogger
-var db tbv.Database
+var debugLog     *tbv.DebugLogger
+var config       tbv.Config
+var db           tbv.Database
 
 func InitializeDatabase(ctx *cli.Context) error {
 	return fmt.Errorf("Not Implemented")

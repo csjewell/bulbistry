@@ -64,31 +64,35 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func GetV2Check(w http.ResponseWriter, r *http.Request) {
+func GetV2Check(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
+func HeadRedirectManifest(_ http.ResponseWriter, _ *http.Request) {
+//func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
 	// commonRedirectManifest(0, manifest)
 }
 
-func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+func HeadRedirectNamespacedManifest(_ http.ResponseWriter, _ *http.Request) {
+// func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
 	// commonRedirectManifest(0, manifest)
 }
 
-func GetRedirectManifest(w http.ResponseWriter, r *http.Request) {
+func GetRedirectManifest(_ http.ResponseWriter, _ *http.Request) {
+// func GetRedirectManifest(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
 	// commonRedirectManifest(1, manifest)
 }
 
-func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+func GetRedirectNamespacedManifest(_ http.ResponseWriter, _ *http.Request) {
+// func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
 	// commonRedirectManifest(1, manifest)
@@ -123,7 +127,7 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 		// Kick out with a 500 error
 	}
 
-	bc, ok := f.(BulbistryConfig)
+	bc, ok := f.(Config)
 	if !ok {
 		w.Write(ConfigError(errors.New("Configuration not loadable")))
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
@@ -145,7 +149,8 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 	// Print out JSON tag list
 }
 
-func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
+func GetNamespacedTags(_ http.ResponseWriter, _ *http.Request) {
+// func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
 	//	vars := mux.Vars(r)
 
 	// Get manifest SHA and content type based on request parameters
@@ -154,13 +159,13 @@ func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
 
 // Routines up to this point are at least psuedocoded
 
-func GetManifest(w http.ResponseWriter, e *http.Request) {
+func GetManifest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func GetNamespacedManifest(w http.ResponseWriter, e *http.Request) {
+func GetNamespacedManifest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
