@@ -153,13 +153,13 @@ func CreateConfig(ctx *cli.Context) error {
 	bPort, _ := strconv.Atoi(urlBlob.Port())
 
 	cfg = config.Config{
-		ExternalURL:   config.ConfigURL{
+		ExternalURL: config.ConfigURL{
 			Scheme:   urlRegistry.Scheme,
 			HostName: urlRegistry.Hostname(),
 			Port:     euPort,
 			Path:     urlRegistry.Path,
 		},
-		BlobURL:       config.ConfigURL{
+		BlobURL: config.ConfigURL{
 			Scheme:   urlBlob.Scheme,
 			HostName: urlBlob.Hostname(),
 			Port:     bPort,

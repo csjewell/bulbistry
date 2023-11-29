@@ -1,5 +1,7 @@
 Bulbistry
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/csjewell/bulbistry)](https://goreportcard.com/report/github.com/csjewell/bulbistry)
+
 The name comes from *Thomomys bulbivorus*, the scientific name for the Camas pocket gopher, and the fact that this implements an OCI-compliant container registry.
 
 The intention is to write a registry for (semi-)private small-scale use to be wrapped in a container.
