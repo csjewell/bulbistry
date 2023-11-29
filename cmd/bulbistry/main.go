@@ -3,6 +3,9 @@
 package main
 
 import (
+	"internal/config"
+	v "internal/version"
+
 	"context"
 	"fmt"
 	"net"
@@ -19,7 +22,7 @@ import (
 var authorizer   *htpasswd.File
 var executionLog *tbv.Logger
 var debugLog     *tbv.DebugLogger
-var config       tbv.Config
+var cfg          config.Config
 var db           tbv.Database
 
 func InitializeDatabase(ctx *cli.Context) error {
@@ -45,7 +48,7 @@ func main() {
 		Usage:     "A pared-down container registry, perfect for self-hosting",
 		Authors:   []*cli.Author{{Name: "Curtis Jewell", Email: "swordsman@curtisjewell.name"}},
 		Copyright: "Copyright (c) 2023 Curtis Jewell",
-		Version:   tbv.Version(),
+		Version:   v.Version(),
 		Action:    func(c *cli.Context) error { return RunServer(c) },
 		Commands: []*cli.Command{
 			&cli.Command{
@@ -129,14 +132,14 @@ func RunServer(ctx *cli.Context) error {
 		return nil
 	}
 
-	config, err := tbv.ReadConfig(ctx.String("config"))
+	cfg, err := config.ReadConfig(ctx.String("config"))
 	if err != nil {
 		executionLog.Fatal(err.Error())
 	}
 
 	needAuth := false
-	if config.HTPasswdFile != "" {
-		authorizer, err = htpasswd.New(config.HTPasswdFile, htpasswd.DefaultSystems, nil)
+	if cfg.HTPasswdFile != "" {
+		authorizer, err = htpasswd.New(cfg.HTPasswdFile, htpasswd.DefaultSystems, nil)
 		if err != nil {
 			executionLog.Fatal(err.Error())
 		}
@@ -200,7 +203,7 @@ func RunServer(ctx *cli.Context) error {
 
 	svr := &http.Server{
 		Handler:        r,
-		Addr:           config.GetListenOn(),
+		Addr:           cfg.GetListenOn(),
 		ReadTimeout:    120 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		IdleTimeout:    120 * time.Second,
@@ -213,7 +216,7 @@ func RunServer(ctx *cli.Context) error {
 }
 
 func htcontext(l net.Listener) context.Context {
-	ctx := context.WithValue(context.Background(), tbv.ConfigKey, config)
+	ctx := context.WithValue(context.Background(), tbv.ConfigKey, cfg)
 	return ctx
 }
 

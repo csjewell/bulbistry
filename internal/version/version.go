@@ -1,4 +1,4 @@
-package bulbistry
+package version
 
 // Returns the application version
 func Version() string {

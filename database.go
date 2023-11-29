@@ -1,6 +1,9 @@
 package bulbistry
 
 import (
+	"internal/config"
+	v "internal/version"
+
 	"database/sql"
 	"errors"
 	"log"
@@ -17,8 +20,8 @@ var (
 )
 
 type Database struct {
-	db *sql.DB
-	cfg Config
+	db  *sql.DB
+	cfg config.Config
 }
 
 type Blob struct {
@@ -51,7 +54,7 @@ func (mt *ManifestTag) Normalize() error {
 	return nil
 }
 
-func NewDatabase(cfg Config) *Database {
+func NewDatabase(cfg config.Config) *Database {
 	db, err := sql.Open("sqlite3", cfg.DatabaseFile)
 
 	if err != nil {
@@ -59,7 +62,7 @@ func NewDatabase(cfg Config) *Database {
 	}
 
 	return &Database{
-		db: db,
+		db:  db,
 		cfg: cfg,
 	}
 }
@@ -77,7 +80,7 @@ func (r *Database) InitializeDatabase() error {
 
 	query = "INSERT INTO tbv_dbversion (db_version) VALUES (?)"
 
-	_, err = r.db.Exec(query, DatabaseVersion())
+	_, err = r.db.Exec(query, v.DatabaseVersion())
 	if err != nil {
 		return err
 	}

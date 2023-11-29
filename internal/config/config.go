@@ -1,7 +1,9 @@
 // The code that handles and stores the configuration for Bulbistry
-package bulbistry
+package config
 
 import (
+	v "internal/version"
+
 	"errors"
 	//"net/url"
 	"os"
@@ -63,7 +65,7 @@ func (cfg Config) GetListenOn() string {
 
 // SaveConfig saves the current configuration to a YAML file.
 func (cfg Config) SaveConfig(filename string) error {
-	cfg.Version = Version()
+	cfg.Version = v.Version()
 
 	yml, err := yaml.Marshal(cfg)
 	if err != nil {

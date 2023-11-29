@@ -1,6 +1,8 @@
 package main
 
 import (
+	"internal/config"
+
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,7 +10,6 @@ import (
 	"path"
 	"strconv"
 
-	tbv "github.com/csjewell/bulbistry"
 	"github.com/manifoldco/promptui"
 	"github.com/urfave/cli/v2"
 )
@@ -151,27 +152,27 @@ func CreateConfig(ctx *cli.Context) error {
 	euPort, _ := strconv.Atoi(urlRegistry.Port())
 	bPort, _ := strconv.Atoi(urlBlob.Port())
 
-	config = tbv.Config{
-		ExternalURL:   tbv.ConfigURL{
+	cfg = config.Config{
+		ExternalURL:   config.ConfigURL{
 			Scheme:   urlRegistry.Scheme,
 			HostName: urlRegistry.Hostname(),
 			Port:     euPort,
 			Path:     urlRegistry.Path,
 		},
-		BlobURL:       tbv.ConfigURL{
+		BlobURL:       config.ConfigURL{
 			Scheme:   urlBlob.Scheme,
 			HostName: urlBlob.Hostname(),
 			Port:     bPort,
 			Path:     urlBlob.Path,
 		},
-		ListenOn:      tbv.ConfigListenOn{IP: ip, Port: port},
+		ListenOn:      config.ConfigListenOn{IP: ip, Port: port},
 		HTPasswdFile:  htpasswdFile,
 		DatabaseFile:  databaseFile,
 		BlobDirectory: blobDirectory,
 		BlobIsProxied: isProxied,
 	}
 
-	err = config.SaveConfig(ctx.String("config"))
+	err = cfg.SaveConfig(ctx.String("config"))
 	if err != nil {
 		return err
 	}
