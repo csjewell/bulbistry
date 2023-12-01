@@ -10,10 +10,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func InitializeDatabase(ctx *cli.Context) error {
+func AddUser(ctx *cli.Context) error {
 	return fmt.Errorf("Not Implemented")
 }
 
-func MigrateDatabase(ctx *cli.Context) error {
+func DeleteUser(ctx *cli.Context) error {
 	return fmt.Errorf("Not Implemented")
 }

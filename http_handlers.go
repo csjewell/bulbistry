@@ -2,6 +2,8 @@ package bulbistry
 
 import (
 	"internal/config"
+	"internal/database"
+	"internal/urls"
 
 	"context"
 	"errors"
@@ -66,24 +68,81 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
+func getConfig(r *http.Request) (*config.Config, error) {
+	ctx := r.Context()
+	f := ctx.Value(ConfigKey)
+	if f == nil {
+		return nil, errors.New("Configuration not available")
+	}
+
+	cfg, ok := f.(config.Config)
+	if !ok {
+		return nil, errors.New("Configuration not loadable")
+	}
+
+	return &cfg, nil
+}
+
+
 func GetV2Check(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func HeadRedirectManifest(_ http.ResponseWriter, _ *http.Request) {
-	// func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(e)
-	// Get manifest SHA and content type based on request parameters
-	// commonRedirectManifest(0, manifest)
+func writeError(err error, w http.ResponseWriter) {
+
 }
 
-func HeadRedirectNamespacedManifest(_ http.ResponseWriter, _ *http.Request) {
-	// func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(e)
-	// Get manifest SHA and content type based on request parameters
-	// commonRedirectManifest(0, manifest)
+func writeNotFound(err error, w http.ResponseWriter) {
+	
+}
+
+func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	cfg, err := getConfig(r)
+	if err != nil {
+		writeError(err, w)
+		return
+	}
+
+	db, err := database.NewDatabase(cfg)
+	if err != nil {
+		writeError(err, w)
+		return
+	}
+
+	mt, err := db.GetManifestTag(vars["manifestName"], vars["reference"]);
+	if err != nil {
+		writeNotFound(err, w)
+		return
+	}
+
+	commonRedirectManifest(false, *cfg, *mt, w)
+}
+
+func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cfg, err := getConfig(r)
+		if err != nil {
+			writeError(err, w)
+			return
+		}
+
+		db, err := database.NewDatabase(cfg);
+		if err != nil {
+			writeError(err, w)
+			return
+		}
+
+		mt, err := db.GetNamespacedManifestTag(vars["namespace"], vars["manifestName"], vars["reference"])
+		if err != nil {
+			writeNotFound(err, w)
+			return
+		}
+	
+		commonRedirectManifest(false, *cfg, *mt, w)
 }
 
 func GetRedirectManifest(_ http.ResponseWriter, _ *http.Request) {
@@ -97,13 +156,14 @@ func GetRedirectNamespacedManifest(_ http.ResponseWriter, _ *http.Request) {
 	// func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
 	// vars := mux.Vars(e)
 	// Get manifest SHA and content type based on request parameters
-	// commonRedirectManifest(1, manifest)
+	// commonRedirectManifest(1, mt)
 }
 
-func commonRedirectManifest(hasBody bool, mt ManifestTag, url string, w http.ResponseWriter) {
+func commonRedirectManifest(hasBody bool, cfg config.Config, mt database.ManifestTag, w http.ResponseWriter) {
 	if mt.ID != 0 {
+		url := urls.GetManifestURL(cfg, mt)
 		w.Header().Set("ETag", `"`+mt.Sha256+`"`)
-		w.Header().Set("Content-Type", mt.ContentType)
+		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Docker-Content-Digest", mt.Sha256)
 		if hasBody {
 			w.Header().Set("Location", url)
@@ -146,7 +206,7 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	db := NewDatabase(bc)
+	db, _ := database.NewDatabase(&bc)
 	db.GetTags(vars["manifestName"], n, r.FormValue("last"))
 	// Print out JSON tag list
 }

@@ -4,6 +4,7 @@ package main
 
 import (
 	"internal/config"
+	"internal/database"
 	v "internal/version"
 
 	"fmt"
@@ -18,7 +19,7 @@ var authorizer *htpasswd.File
 var executionLog *tbv.Logger
 var debugLog *tbv.DebugLogger
 var cfg config.Config
-var db tbv.Database
+var db database.Database
 
 func main() {
 	executionLog = tbv.NewLogger(os.Stderr, nil)

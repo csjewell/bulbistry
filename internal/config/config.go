@@ -5,7 +5,7 @@ import (
 	v "internal/version"
 
 	"errors"
-	//"net/url"
+	"net/url"
 	"os"
 
 	yaml "github.com/goccy/go-yaml"
@@ -48,14 +48,32 @@ func newConfigError(key, err string) bulbistryConfigError {
 	return bulbistryConfigError{key, errors.New(err + ": " + key)}
 }
 
-// GetExternalURL gets the registry's base URL
-func (cfg Config) GetExternalURL() string {
-	return cfg.ExternalURL.Scheme + "://" + cfg.ExternalURL.HostName + ":" + string(cfg.ExternalURL.Port) + "/v2/"
+func (u ConfigURL) getHostname() string {
+	scheme := u.Scheme
+	port   := u.Port
+	host   := u.HostName
+
+	if scheme == "http" && port == 80 {
+		return host
+	}
+
+	if scheme == "https" && port == 443 {
+		return host
+	}
+
+	return host + ":" + string(port)
 }
 
-// GetBlobURL gets the blob storage base URL.
-func (cfg Config) GetBlobURL() string {
-	return cfg.ExternalURL.Scheme + "://" + cfg.ExternalURL.HostName + ":" + string(cfg.ExternalURL.Port) + "/v2/"
+func (u ConfigURL) getURL() *url.URL {
+	return &url.URL{
+		Scheme: u.Scheme,
+		Host:   u.getHostname(),
+		Path:   u.Path,
+	}
+}
+
+func (cfg Config) GetExternalURL() *url.URL {
+	return cfg.ExternalURL.getURL().JoinPath("/v2/")
 }
 
 // GetListenOn gets the IP and port that the registry is configured to listen on

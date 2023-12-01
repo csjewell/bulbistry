@@ -1,4 +1,4 @@
-package bulbistry
+package database
 
 import (
 	"internal/config"
@@ -6,7 +6,6 @@ import (
 
 	"database/sql"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/mattn/go-sqlite3"
@@ -21,7 +20,7 @@ var (
 
 type Database struct {
 	db  *sql.DB
-	cfg config.Config
+	cfg *config.Config
 }
 
 type Blob struct {
@@ -54,17 +53,17 @@ func (mt *ManifestTag) Normalize() error {
 	return nil
 }
 
-func NewDatabase(cfg config.Config) *Database {
+func NewDatabase(cfg *config.Config) (*Database, error) {
 	db, err := sql.Open("sqlite3", cfg.DatabaseFile)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &Database{
 		db:  db,
 		cfg: cfg,
-	}
+	}, nil
 }
 
 func (r *Database) InitializeDatabase() error {
@@ -204,7 +203,8 @@ func (r *Database) GetManifestTag(name string, tag string) (*ManifestTag, error)
 	`, name, tag)
 
 	var mt ManifestTag
-	if err := row.Scan(&mt.ID, &mt.uuid, &mt.Namespace, &mt.Name, &mt.Tag, &mt.ContentType, &mt.Sha256, &mt.Sha512); err != nil {
+	var st string
+	if err := row.Scan(&mt.ID, &mt.uuid, &mt.Namespace, &mt.Name, &mt.Tag, &st, &mt.ContentType, &mt.Sha256, &mt.Sha512); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotExists
 		}
@@ -212,6 +212,27 @@ func (r *Database) GetManifestTag(name string, tag string) (*ManifestTag, error)
 	}
 	return &mt, nil
 }
+
+func (r *Database) GetNamespacedManifestTag(namespace string, name string, tag string) (*ManifestTag, error) {
+	row := r.db.QueryRow(`
+		SELECT *
+		  FROM manifest_tag
+		 WHERE namespace = ?
+		   AND name = ?
+		   AND tag  = ?
+	`, namespace, name, tag)
+
+	var mt ManifestTag
+	var st string
+	if err := row.Scan(&mt.ID, &mt.uuid, &mt.Namespace, &mt.Name, &mt.Tag, &st, &mt.ContentType, &mt.Sha256, &mt.Sha512); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotExists
+		}
+		return nil, err
+	}
+	return &mt, nil
+}
+
 
 func (r *Database) UpdateManifestTag(id int64, mt ManifestTag) (*ManifestTag, error) {
 	if id == 0 {

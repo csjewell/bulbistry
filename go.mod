@@ -4,10 +4,14 @@ go 1.21.4
 
 require (
 	internal/config v0.0.0
+	internal/database v0.0.0
+	internal/urls v0.0.0
 	internal/version v0.0.0
 )
 
 replace internal/config => ./internal/config
+replace internal/database => ./internal/database
+replace internal/urls => ./internal/urls
 replace internal/version => ./internal/version
 
 require (

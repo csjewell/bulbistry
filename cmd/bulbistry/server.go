@@ -30,11 +30,13 @@ func RunServer(ctx *cli.Context) error {
 	}
 
 	r := mux.NewRouter().StrictSlash(false).SkipClean(true).UseEncodedPath()
+
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "http://example.com")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 	}).Methods(http.MethodOptions)
 	r.Use(mux.CORSMethodMiddleware(r))
+
 	s := r.PathPrefix("/v2").Subrouter()
 	ba := tbv.NewBasicAuthMiddleware(needAuth, authorizer)
 	s.Use(ba.Middleware)
@@ -98,7 +100,7 @@ func RunServer(ctx *cli.Context) error {
 	return nil
 }
 
-func htcontext(l net.Listener) context.Context {
+func htcontext(_ net.Listener) context.Context {
 	ctx := context.WithValue(context.Background(), tbv.ConfigKey, cfg)
 	return ctx
 }
