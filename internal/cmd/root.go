@@ -23,7 +23,6 @@ package cmd
 
 import (
 	v "internal/version"
-	"log"
 
 	"errors"
 	"log/slog"
@@ -36,12 +35,15 @@ import (
 )
 
 type bulbistryConfigError struct {
-	configKey string
+	configKeys []string
 	error
 }
 
-func newConfigError(key string) bulbistryConfigError {
-	return bulbistryConfigError{key, errors.New("configuration entry required: " + key)}
+func newConfigError(keys []string) bulbistryConfigError {
+	return bulbistryConfigError{
+		keys,
+		errors.New("configuration entry required: " + strings.Join(keys, ", ")),
+	}
 }
 
 var cfgFile string
@@ -51,16 +53,15 @@ var debugLogging bool
 var rootCmd = &cobra.Command{
 	Use:     "bulbistry",
 	Version: v.Version(),
-	Short:   "A pared-down container registry, perfect for self-hosting",
+	Short:   "A pared-down container registry server, perfect for self-hosting",
 	Long: `bulbistry version ` + v.Version() + `
-	A small (soon to be OCI-compliant) registry server, perfect for self-hosting.
+	A pared-down (soon to be OCI-compliant) container registry server, perfect for self-hosting.
 	By default, it starts the server on the port specified in the configuration or the environment.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig(false)
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		slog.Error("Server not hooked in yet.")
-		os.Exit(1)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return errors.New("Server not hooked in yet.")
 	},
 }
 
@@ -69,6 +70,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 }
@@ -101,7 +103,7 @@ func initConfig(_ bool) error {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		log.Println("Using config file:", viper.ConfigFileUsed())
+		slog.Info("Using config file:", viper.ConfigFileUsed())
 
 		settingKeys := viper.AllKeys()
 		settings := make(map[string]any, 50)
@@ -123,10 +125,12 @@ func initConfig(_ bool) error {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv() // read in environment variables that match
 
+	configKeyErr := make([]string, 5)
+
 	if viper.IsSet("file.database") {
 		viper.SetDefault("file.database", viper.Get("file.database"))
 	} else {
-		return newConfigError("FILE_DATABASE")
+		configKeyErr = append(configKeyErr, "FILE_DATABASE")
 	}
 
 	viper.SetDefault("file.htpasswd", "")
@@ -134,13 +138,13 @@ func initConfig(_ bool) error {
 	if viper.IsSet("registry.url.hostname") {
 		viper.SetDefault("registry.url.hostname", viper.Get("registry.url.hostname"))
 	} else {
-		return newConfigError("REGISTRY_URL_HOSTNAME")
+		configKeyErr = append(configKeyErr, "REGISTRY_URL_HOSTNAME")
 	}
 
 	if viper.IsSet("blob.directory") {
 		viper.SetDefault("blob.directory", viper.Get("blob.directory"))
 	} else {
-		return newConfigError("BLOB_DIRECTORY")
+		configKeyErr = append(configKeyErr, "BLOB_DIRECTORY")
 	}
 
 	viper.SetDefault("registry.url.port", 80)
@@ -151,7 +155,7 @@ func initConfig(_ bool) error {
 
 	if viper.GetBool("blob.proxied") {
 		if !viper.IsSet("blob.url.hostname") {
-			return newConfigError("BLOB_URL_HOSTNAME")
+			configKeyErr = append(configKeyErr, "BLOB_URL_HOSTNAME")
 		}
 	} else {
 		viper.SetDefault("blob.url.hostname", viper.GetString("registry.url.hostname"))
@@ -160,6 +164,10 @@ func initConfig(_ bool) error {
 	viper.SetDefault("blob.url.port", 80)
 	viper.SetDefault("blob.url.path", "/blob")
 	viper.SetDefault("blob.url.scheme", "http")
+
+	if len(configKeyErr) > 0 {
+		return newConfigError(configKeyErr)
+	}
 
 	return nil
 }
