@@ -29,7 +29,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/go-sqlite"
 )
 
 var (
@@ -79,7 +79,7 @@ type TagsList struct {
 }
 
 func NewDatabase(databaseFile string) (*Database, error) {
-	db, err := sql.Open("sqlite3", databaseFile)
+	db, err := sql.Open("sqlite", databaseFile)
 
 	if err != nil {
 		return nil, err
@@ -140,12 +140,12 @@ func (r Database) CreateManifestLink(mt ManifestTag) (*ManifestTag, error) {
 	sortable := strings.ToLower(mt.Tag)
 	res, err := r.db.Exec(query, mt.Namespace, mt.Name, mt.Tag, sortable, mt.ContentType, mt.Sha256, mt.Sha512)
 	if err != nil {
-		var sqliteErr sqlite3.Error
-		if errors.As(err, &sqliteErr) {
-			if errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintUnique) {
-				return nil, ErrDuplicate
-			}
-		}
+		//var sqliteErr sqlite.Error
+		//if errors.As(err, &sqliteErr) {
+		//	if errors.Is(sqliteErr.ExtendedCode, sqlite.ErrConstraintUnique) {
+		//		return nil, ErrDuplicate
+		//	}
+		//}
 		return nil, err
 	}
 

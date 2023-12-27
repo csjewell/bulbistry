@@ -30,3 +30,4 @@
 # ...even if they are in subdirectories
 !*/
 
+!.goreleaser.yaml

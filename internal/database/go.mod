@@ -2,4 +2,4 @@ module version
 
 go 1.14
 
-require github.com/mattn/go-sqlite3 v1.14.19
+require github.com/glebarez/go-sqlite v1.22.0
