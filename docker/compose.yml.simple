@@ -1,29 +1,15 @@
 version: "3.8"
 
 services:
-    lstu:
-        build: lstu/Dockerfile
-        container_name: lstu-www
+    bulbistry:
+        build: .
+        container_name: bulbistry-www
         restart: unless-stopped
         ports:
-          - 8092:8080
+          - 8088:8088
         volumes:
-            - ./lstu.conf:/home/lstu/lstu.conf:ro
-            - ./lstu.passwd:/home/lstu/lstu.passwd:ro
-            - ./lstu.db:/home/lstu/lstu.db:rw
-        networks:
-         - my-network
-    cache:
-        ports:
-          - 11211:11211
-        image: cgr.dev/chainguard/memcached
-        container_name: lstu-cache
-        restart: unless-stopped
-        networks:
-         - my-network
-networks:
-    my-network:
-        name: homelab
-        external: true
+            - ./env.simple:/.env:ro
+            - ./bulbistry.db:/bulbistry.db:rw
+            - ./blog:/blog:rw
 
 

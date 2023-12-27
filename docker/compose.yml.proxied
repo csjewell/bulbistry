@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+    bulbistry:
+        build: .
+        container_name: bulbistry-www
+        restart: unless-stopped
+        volumes:
+            - ./env.proxied:/.env:ro
+            - ./blog:/blog:rw
+        networks:
+         - bulbistry-net
+    proxy:
+        ports:
+          - 8080:8080
+        image: cgr.dev/chainguard/nginx
+        container_name: bulbistry-proxy
+        volumes:
+            - ./bulbistry.nginx.conf:/etc/nginx/conf.d/bulbistry.conf:ro
+            - ./nginx_proxy:/usr/share/nginx/html:ro
+            - ./blob:/usr/share/nginx/html/blob:ro
+        restart: unless-stopped
+        networks:
+         - bulbistry-net
+networks:
+    bulbistry-net:
