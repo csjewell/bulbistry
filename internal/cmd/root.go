@@ -22,8 +22,11 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"errors"
+	v "internal/version"
 	"log"
+
+	"errors"
+	"log/slog"
 	"os"
 	"path"
 	"strings"
@@ -46,13 +49,18 @@ var debugLogging bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "bulbistry",
-	Short: "A pared-down container registry, perfect for self-hosting",
-	Long: `bulbistry v0.0.5
-	A small OCI-compliant registry server.
+	Use:     "bulbistry",
+	Version: v.Version(),
+	Short:   "A pared-down container registry, perfect for self-hosting",
+	Long: `bulbistry version ` + v.Version() + `
+	A small (soon to be OCI-compliant) registry server, perfect for self-hosting.
 	By default, it starts the server on the port specified in the configuration or the environment.`,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		return initConfig(false)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Fatal("Server not hooked in yet.")
+		slog.Error("Server not hooked in yet.")
+		os.Exit(1)
 	},
 }
 
@@ -66,20 +74,23 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bulbistry/env)")
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Turn on debug logging (default is false)")
 }
 
-func initConfigLocation() {
+// initConfig reads in config file and ENV variables if set.
+// The boolean flag specifies whether to set defaults (true) or return errors (false)
+func initConfig(_ bool) error {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigType("dotenv")
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
+		// Find executable directory.
 		executable, err := os.Executable()
-		cobra.CheckErr(err)
+		if err != nil {
+			return err
+		}
 		executableDir := path.Dir(executable)
 
 		// Search config in same directory as executable with name ".env".
@@ -87,11 +98,6 @@ func initConfigLocation() {
 		viper.AddConfigPath(executableDir)
 		viper.SetConfigName(".env")
 	}
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	initConfigLocation()
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
@@ -120,7 +126,7 @@ func initConfig() {
 	if viper.IsSet("file.database") {
 		viper.SetDefault("file.database", viper.Get("file.database"))
 	} else {
-		log.Println(newConfigError("FILE_DATABASE"))
+		return newConfigError("FILE_DATABASE")
 	}
 
 	viper.SetDefault("file.htpasswd", "")
@@ -128,13 +134,13 @@ func initConfig() {
 	if viper.IsSet("registry.url.hostname") {
 		viper.SetDefault("registry.url.hostname", viper.Get("registry.url.hostname"))
 	} else {
-		log.Println(newConfigError("REGISTRY_URL_HOSTNAME"))
+		return newConfigError("REGISTRY_URL_HOSTNAME")
 	}
 
 	if viper.IsSet("blob.directory") {
 		viper.SetDefault("blob.directory", viper.Get("blob.directory"))
 	} else {
-		log.Println(newConfigError("BLOB_DIRECTORY"))
+		return newConfigError("BLOB_DIRECTORY")
 	}
 
 	viper.SetDefault("registry.url.port", 80)
@@ -145,7 +151,7 @@ func initConfig() {
 
 	if viper.GetBool("blob.proxied") {
 		if !viper.IsSet("blob.url.hostname") {
-			log.Println(newConfigError("BLOB_URL_HOSTNAME"))
+			return newConfigError("BLOB_URL_HOSTNAME")
 		}
 	} else {
 		viper.SetDefault("blob.url.hostname", viper.GetString("registry.url.hostname"))
@@ -154,4 +160,6 @@ func initConfig() {
 	viper.SetDefault("blob.url.port", 80)
 	viper.SetDefault("blob.url.path", "/blob")
 	viper.SetDefault("blob.url.scheme", "http")
+
+	return nil
 }
