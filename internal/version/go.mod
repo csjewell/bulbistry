@@ -1,3 +1,3 @@
-module version 
+module version
 
 go 1.14
