@@ -20,7 +20,7 @@
 
 !revive.toml
 
-!Dockerfile
+!docker/**
 !/.dockerignore
 
 # !Makefile
