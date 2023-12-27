@@ -19,15 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package cmd
 
-package version
+import (
+	"log"
 
-// Returns the application version
-func Version() string {
-	return "v0.0.5"
+	"github.com/spf13/cobra"
+)
+
+// userDeleteCmd represents the user delete command
+var userDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "...",
+	Long:  `...`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Fatal("User delete not implemented at this time")
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	userCmd.AddCommand(userDeleteCmd)
 }

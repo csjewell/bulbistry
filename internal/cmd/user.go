@@ -19,15 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package cmd
 
-package version
+import (
+	"log"
 
-// Returns the application version
-func Version() string {
-	return "v0.0.5"
+	"github.com/spf13/cobra"
+)
+
+// userCmd represents the registry command
+var userCmd = &cobra.Command{
+	Use:   "user",
+	Short: "Operations on the htpasswd file",
+	Long:  `...`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Fatal("Error: User needs added or deleted.")
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	rootCmd.AddCommand(userCmd)
 }

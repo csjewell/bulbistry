@@ -19,15 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package cmd
 
-package version
+import (
+	"log"
 
-// Returns the application version
-func Version() string {
-	return "v0.0.5"
+	"github.com/spf13/cobra"
+)
+
+// databaseCmd represents the database command
+var databaseCmd = &cobra.Command{
+	Use:     "database",
+	Aliases: []string{"db"},
+	Short:   "Database interaction",
+	Long:    `Operations that work on the bulbistry registry database`,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Print("Error: Must specify whether to initialize or migrate the database.")
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	rootCmd.AddCommand(databaseCmd)
+	databaseCmd.PersistentFlags().String("file", "", "The database file to operate on")
 }

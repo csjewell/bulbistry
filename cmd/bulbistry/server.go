@@ -2,27 +2,23 @@ package main
 
 import (
 	"internal/config"
-
-	"context"
-	"net"
 	"net/http"
 	"time"
 
 	tbv "github.com/csjewell/bulbistry"
 	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	htpasswd "github.com/tg123/go-htpasswd"
-	"github.com/urfave/cli/v2"
 )
 
-func RunServer(ctx *cli.Context) error {
-	cfg, err := config.ReadConfig(ctx.String("config"))
-	if err != nil {
-		executionLog.Fatal(err.Error())
-	}
-
+func RunServer(cmd *cobra.Command) error {
+	htPasswdFile := viper.GetString("htpasswd_file")
 	needAuth := false
-	if cfg.HTPasswdFile != "" {
-		authorizer, err = htpasswd.New(cfg.HTPasswdFile, htpasswd.DefaultSystems, nil)
+	var authorizer *htpasswd.File
+	var err error
+	if htPasswdFile != "" {
+		authorizer, err = htpasswd.New(htPasswdFile, htpasswd.DefaultSystems, nil)
 		if err != nil {
 			executionLog.Fatal(err.Error())
 		}
@@ -32,7 +28,7 @@ func RunServer(ctx *cli.Context) error {
 	r := mux.NewRouter().StrictSlash(false).SkipClean(true).UseEncodedPath()
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://example.com")
+		w.Header().Set("Access-Control-Allow-Origin", config.GetExternalOrigin().String())
 		w.Header().Set("Access-Control-Max-Age", "86400")
 	}).Methods(http.MethodOptions)
 	r.Use(mux.CORSMethodMiddleware(r))
@@ -88,21 +84,16 @@ func RunServer(ctx *cli.Context) error {
 
 	svr := &http.Server{
 		Handler:        r,
-		Addr:           cfg.GetListenOn(),
+		Addr:           config.GetListenOn(),
 		ReadTimeout:    120 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		IdleTimeout:    120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
-		BaseContext:    htcontext,
+		// BaseContext:    context.Background(),
 	}
 
 	executionLog.Fatal(svr.ListenAndServe())
 	return nil
-}
-
-func htcontext(_ net.Listener) context.Context {
-	ctx := context.WithValue(context.Background(), tbv.ConfigKey, cfg)
-	return ctx
 }
 
 func handlerNotFound(w http.ResponseWriter, r *http.Request) {

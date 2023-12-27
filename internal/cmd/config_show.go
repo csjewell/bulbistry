@@ -19,15 +19,44 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package cmd
 
-package version
+import (
+	"fmt"
+	"sort"
+	"strings"
 
-// Returns the application version
-func Version() string {
-	return "v0.0.5"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+// configShowCmd represents the configShow command
+var configShowCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Shows the current configuration",
+	Long:  `Shows the current configuration`,
+	Run: func(cmd *cobra.Command, args []string) {
+		settings := viper.AllKeys()
+
+		settingsSimple := make(map[string]string, len(settings))
+
+		for _, key := range settings {
+			envName := strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
+			settingsSimple[envName] = fmt.Sprint(viper.Get(key))
+		}
+
+		keys := make(sort.StringSlice, 0, len(settingsSimple))
+		for k := range settingsSimple {
+			keys = append(keys, k)
+		}
+		keys.Sort()
+
+		for _, k := range keys {
+			fmt.Println(k, "value is:", settingsSimple[k])
+		}
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	configCmd.AddCommand(configShowCmd)
 }

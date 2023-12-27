@@ -19,15 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package cmd
 
-package version
+import (
+	"fmt"
 
-// Returns the application version
-func Version() string {
-	return "v0.0.5"
+	"github.com/spf13/cobra"
+)
+
+// registryCmd represents the registry command
+var registryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "Operations on the bulbistry registry",
+	Long:  `...`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("registry called")
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	rootCmd.AddCommand(registryCmd)
 }

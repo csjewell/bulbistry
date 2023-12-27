@@ -1,43 +1,39 @@
-// The code that handles and stores the configuration for Bulbistry
+/*
+Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// The code that handles the parsed configuration for Bulbistry
 package config
 
 import (
-	v "internal/version"
-
 	"errors"
+	"fmt"
+	"internal/database"
 	"net/url"
-	"os"
 
-	yaml "github.com/goccy/go-yaml"
+	"github.com/spf13/viper"
 )
 
 // Note: struct fields must be public in order for unmarshal to
 // correctly populate the data.
-
-
-type ConfigURL struct {
-	Scheme    string `yaml:"scheme"`
-	HostName  string `yaml:"hostname"`
-	Port      int    `yaml:"port,omitempty"`
-	Path      string `yaml:"path"`
-}
-
-type ConfigListenOn struct {
-	IP   string `yaml:"ip"`
-	Port int    `yaml:"port"`
-}
-
-// A Config variable contains the bulbistry configuration
-type Config struct {
-	Version       string         `yaml:"version"`
-	ExternalURL   ConfigURL      `yaml:"external_url"`
-	BlobURL       ConfigURL      `yaml:"blob_url"`
-	ListenOn      ConfigListenOn `yaml:"listen_on"`
-	BlobIsProxied bool           `yaml:"is_proxied"`
-	DatabaseFile  string         `yaml:"database_file"`
-	HTPasswdFile  string         `yaml:"htpasswd_file"`
-	BlobDirectory string         `yaml:"blob_directory"`
-}
 
 type bulbistryConfigError struct {
 	configKey string
@@ -48,10 +44,11 @@ func newConfigError(key, err string) bulbistryConfigError {
 	return bulbistryConfigError{key, errors.New(err + ": " + key)}
 }
 
-func (u ConfigURL) getHostname() string {
-	scheme := u.Scheme
-	port   := u.Port
-	host   := u.HostName
+func getHostname(urlKey string) string {
+	urlSub := viper.Sub(urlKey)
+	scheme := urlSub.GetString("scheme")
+	port := urlSub.GetInt("port")
+	host := urlSub.GetString("hostname")
 
 	if scheme == "http" && port == 80 {
 		return host
@@ -61,97 +58,47 @@ func (u ConfigURL) getHostname() string {
 		return host
 	}
 
-	return host + ":" + string(port)
+	return host + ":" + fmt.Sprint(port)
 }
 
-func (u ConfigURL) getURL() *url.URL {
+func getURL(urlKey string) *url.URL {
+	urlSub := viper.Sub(urlKey)
 	return &url.URL{
-		Scheme: u.Scheme,
-		Host:   u.getHostname(),
-		Path:   u.Path,
+		Scheme: urlSub.GetString("scheme"),
+		Host:   getHostname(urlKey),
+		Path:   urlSub.GetString("path"),
 	}
 }
 
-func (cfg Config) GetExternalURL() *url.URL {
-	return cfg.ExternalURL.getURL().JoinPath("/v2/")
+func GetExternalOrigin() *url.URL {
+	return getURL("external_url")
+}
+
+func GetExternalURL() *url.URL {
+	return getURL("external_url").JoinPath("/v2/")
 }
 
 // GetListenOn gets the IP and port that the registry is configured to listen on
-func (cfg Config) GetListenOn() string {
-	return cfg.ListenOn.IP + ":" + string(cfg.ListenOn.Port)
+func GetListenOn() string {
+	return viper.GetString("listen_on.ip") + ":" + fmt.Sprint(viper.GetInt("listen_on.port"))
 }
 
-// SaveConfig saves the current configuration to a YAML file.
-func (cfg Config) SaveConfig(filename string) error {
-	cfg.Version = v.Version()
-
-	yml, err := yaml.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filename, []byte(yml), 0640)
-	if err != nil {
-		return err
-	}
+// CheckConfig checks that the current configuration is valid
+func CheckConfig() error {
 
 	return nil
 }
 
-// ReadConfig reads the current configuration from a YAML file
-func ReadConfig(filename string) (*Config, error) {
-	yml, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
+// GetManifestURL gets the URL to retrieve a particular manifest
+func GetManifestURL(mt database.ManifestTag) string {
+	if mt.Namespace == "" {
+		return GetExternalURL().JoinPath(mt.Name, "/manifest/", mt.Sha512).String()
 	}
+	return GetExternalURL().JoinPath(mt.Namespace, mt.Name, "/manifest/", mt.Sha512).String()
+}
 
-	var cfg Config
-	err = yaml.Unmarshal([]byte(yml), &cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if cfg.DatabaseFile == "" {
-		return nil, newConfigError("database_file", "configuration entry required")
-	}
-
-	if cfg.ListenOn.Port == 0 {
-		cfg.ListenOn.Port = 28080
-	}
-
-	if cfg.ListenOn.IP == "" {
-		cfg.ListenOn.IP = "127.0.0.1"
-	}
-
-	if cfg.ExternalURL.HostName == "" {
-		return nil, newConfigError("hostname", "configuration entry required")
-	}
-
-	if cfg.ExternalURL.Port == 0 {
-		cfg.ExternalURL.Port = 80
-	}
-
-	if cfg.ExternalURL.Scheme == "" {
-		cfg.ExternalURL.Scheme = "http"
-	}
-
-	if cfg.BlobIsProxied {
-		if cfg.BlobURL.HostName == "" {
-			return nil, newConfigError("hostname", "configuration entry required")
-		}
-	} else {
-		if cfg.BlobURL.HostName == "" {
-			cfg.BlobURL.HostName = cfg.ExternalURL.HostName
-		}
-	}
-
-	if cfg.BlobURL.Port == 0 {
-		cfg.ExternalURL.Port = 80
-	}
-
-	if cfg.ExternalURL.Scheme == "" {
-		cfg.ExternalURL.Scheme = "http"
-	}
-
-	return &cfg, nil
+// GetBlobURL gets the blob storage base URL.
+func GetBlobURL() string {
+	//return GetExternalURL().Scheme + "://" + GetExternalURL().HostName + ":" + GetExternalURL().Port + "/v2/"
+	return ""
 }

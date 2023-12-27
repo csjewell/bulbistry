@@ -1,7 +1,28 @@
+/*
+Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 package database
 
 import (
-	"internal/config"
 	v "internal/version"
 
 	"database/sql"
@@ -19,8 +40,7 @@ var (
 )
 
 type Database struct {
-	db  *sql.DB
-	cfg *config.Config
+	db *sql.DB
 }
 
 type Blob struct {
@@ -53,20 +73,24 @@ func (mt *ManifestTag) Normalize() error {
 	return nil
 }
 
-func NewDatabase(cfg *config.Config) (*Database, error) {
-	db, err := sql.Open("sqlite3", cfg.DatabaseFile)
+type TagsList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+func NewDatabase(databaseFile string) (*Database, error) {
+	db, err := sql.Open("sqlite3", databaseFile)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &Database{
-		db:  db,
-		cfg: cfg,
+		db: db,
 	}, nil
 }
 
-func (r *Database) InitializeDatabase() error {
+func (r Database) InitializeDatabase() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS tbv_dbversion (
 		db_version TEXT
@@ -101,11 +125,11 @@ func (r *Database) InitializeDatabase() error {
 	return err
 }
 
-func (r *Database) MigrateDatabase() error {
+func (r Database) MigrateDatabase() error {
 	return nil
 }
 
-func (r *Database) CreateManifestLink(mt ManifestTag) (*ManifestTag, error) {
+func (r Database) CreateManifestLink(mt ManifestTag) (*ManifestTag, error) {
 	query := `
 		INSERT
 		  INTO manifest_tags
@@ -134,7 +158,7 @@ func (r *Database) CreateManifestLink(mt ManifestTag) (*ManifestTag, error) {
 	return &mt, nil
 }
 
-func (r *Database) GetTags(name string, n int, last string) ([]string, error) {
+func (r Database) GetTags(name string, n int, last string) (*TagsList, error) {
 	query := `
 		SELECT tag
 		  FROM manifest_tags
@@ -171,10 +195,61 @@ func (r *Database) GetTags(name string, n int, last string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	return r.getColumn(rows, n)
+	tags, err := r.getColumn(rows, n)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TagsList{Name: name, Tags: tags}, nil
 }
 
-func (r *Database) getColumn(rows *sql.Rows, n int) ([]string, error) {
+func (r Database) GetNamespacedTags(namespace string, name string, n int, last string) (*TagsList, error) {
+	query := `
+		SELECT tag
+		  FROM manifest_tags
+		 WHERE namespace = ?
+		   AND name = ?
+		`
+
+	if last != "" {
+		query += `   AND sortable_tag > ?
+			`
+	}
+
+	query += " ORDER BY sortable_tag "
+
+	var rows *sql.Rows
+	var err error
+	if n != 0 {
+		query += " LIMIT ?"
+		if last != "" {
+			rows, err = r.db.Query(query, namespace, name, last, n)
+		} else {
+			rows, err = r.db.Query(query, namespace, name, n)
+		}
+	} else {
+		if last != "" {
+			rows, err = r.db.Query(query, namespace, name, last)
+		} else {
+			rows, err = r.db.Query(query, namespace, name)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags, err := r.getColumn(rows, n)
+	if err != nil {
+		return nil, err
+	}
+
+	fullname := namespace + "/" + name
+	return &TagsList{Name: fullname, Tags: tags}, nil
+}
+
+func (r Database) getColumn(rows *sql.Rows, n int) ([]string, error) {
 	var answer []string
 	if n != 0 {
 		answer = make([]string, n)
@@ -193,7 +268,7 @@ func (r *Database) getColumn(rows *sql.Rows, n int) ([]string, error) {
 	return answer, nil
 }
 
-func (r *Database) GetManifestTag(name string, tag string) (*ManifestTag, error) {
+func (r Database) GetManifestTag(name string, tag string) (*ManifestTag, error) {
 	row := r.db.QueryRow(`
 		SELECT *
 		  FROM manifest_tag
@@ -213,7 +288,7 @@ func (r *Database) GetManifestTag(name string, tag string) (*ManifestTag, error)
 	return &mt, nil
 }
 
-func (r *Database) GetNamespacedManifestTag(namespace string, name string, tag string) (*ManifestTag, error) {
+func (r Database) GetNamespacedManifestTag(namespace string, name string, tag string) (*ManifestTag, error) {
 	row := r.db.QueryRow(`
 		SELECT *
 		  FROM manifest_tag
@@ -233,8 +308,7 @@ func (r *Database) GetNamespacedManifestTag(namespace string, name string, tag s
 	return &mt, nil
 }
 
-
-func (r *Database) UpdateManifestTag(id int64, mt ManifestTag) (*ManifestTag, error) {
+func (r Database) UpdateManifestTag(id int64, mt ManifestTag) (*ManifestTag, error) {
 	if id == 0 {
 		return nil, errors.New("invalid updated ID")
 	}

@@ -1,36 +1,20 @@
-module github.com/csjewell/bulbistry
+module github.com/csjewell/bulbistry/internal/cmd
 
 go 1.21.5
 
 require (
-	internal/cmd v0.0.0
-	internal/config v0.0.0
-	internal/database v0.0.0
-	internal/version v0.0.0 // indirect
-)
-
-replace internal/cmd => ./internal/cmd
-
-replace internal/config => ./internal/config
-
-replace internal/database => ./internal/database
-
-replace internal/version => ./internal/version
-
-require (
-	github.com/google/uuid v1.4.0
-	github.com/gorilla/mux v1.8.1
+	github.com/distribution/distribution/v3 v3.0.0-alpha.1
+	github.com/imroc/req/v3 v3.42.2
+	github.com/manifoldco/promptui v0.9.0
+	github.com/opencontainers/image-spec v1.0.2
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	github.com/tg123/go-htpasswd v1.2.1
 )
 
 require (
-	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/distribution/distribution/v3 v3.0.0-alpha.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
@@ -40,16 +24,12 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/imroc/req/v3 v3.42.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
-	github.com/manifoldco/promptui v0.9.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.18 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.12.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-20 v0.3.3 // indirect

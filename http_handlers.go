@@ -1,12 +1,34 @@
+/*
+Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 package bulbistry
 
 import (
 	"internal/config"
 	"internal/database"
-	"internal/urls"
 
 	"context"
-	"errors"
+	"encoding/json"
+
 	//"fmt"
 	"net/http"
 	//"strings"
@@ -15,6 +37,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 	htpasswd "github.com/tg123/go-htpasswd"
 )
 
@@ -48,8 +71,7 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 		username, password, ok := r.BasicAuth()
 		if !ok {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Bulbistry OCI Artifact Registry", charset="UTF-8"`)
-			w.Write(NoLogin())
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			NoLogin(w)
 			return
 		}
 
@@ -57,8 +79,7 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 
 		if !ok {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Bulbistry OCI Artifact Registry", charset="UTF-8"`)
-			w.Write(InvalidLogin())
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			InvalidLogin(w)
 			return
 		}
 
@@ -68,21 +89,14 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func getConfig(r *http.Request) (*config.Config, error) {
-	ctx := r.Context()
-	f := ctx.Value(ConfigKey)
-	if f == nil {
-		return nil, errors.New("Configuration not available")
+func getDB(r *http.Request) (*database.Database, error) {
+	db, err := database.NewDatabase(viper.GetString("database_file"))
+	if err != nil {
+		return nil, err
 	}
 
-	cfg, ok := f.(config.Config)
-	if !ok {
-		return nil, errors.New("Configuration not loadable")
-	}
-
-	return &cfg, nil
+	return db, nil
 }
-
 
 func GetV2Check(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", `text/plain`)
@@ -95,73 +109,82 @@ func writeError(err error, w http.ResponseWriter) {
 }
 
 func writeNotFound(err error, w http.ResponseWriter) {
-	
+
 }
 
 func HeadRedirectManifest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	cfg, err := getConfig(r)
+	db, err := getDB(r)
 	if err != nil {
 		writeError(err, w)
 		return
 	}
 
-	db, err := database.NewDatabase(cfg)
-	if err != nil {
-		writeError(err, w)
-		return
-	}
-
-	mt, err := db.GetManifestTag(vars["manifestName"], vars["reference"]);
+	mt, err := db.GetManifestTag(vars["manifestName"], vars["reference"])
 	if err != nil {
 		writeNotFound(err, w)
 		return
 	}
 
-	commonRedirectManifest(false, *cfg, *mt, w)
+	commonRedirectManifest(false, *mt, w)
 }
 
 func HeadRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
+	vars := mux.Vars(r)
 
-		cfg, err := getConfig(r)
-		if err != nil {
-			writeError(err, w)
-			return
-		}
+	db, err := getDB(r)
+	if err != nil {
+		writeError(err, w)
+		return
+	}
 
-		db, err := database.NewDatabase(cfg);
-		if err != nil {
-			writeError(err, w)
-			return
-		}
+	mt, err := db.GetNamespacedManifestTag(vars["namespace"], vars["manifestName"], vars["reference"])
+	if err != nil {
+		writeNotFound(err, w)
+		return
+	}
 
-		mt, err := db.GetNamespacedManifestTag(vars["namespace"], vars["manifestName"], vars["reference"])
-		if err != nil {
-			writeNotFound(err, w)
-			return
-		}
-	
-		commonRedirectManifest(false, *cfg, *mt, w)
+	commonRedirectManifest(false, *mt, w)
 }
 
-func GetRedirectManifest(_ http.ResponseWriter, _ *http.Request) {
-	// func GetRedirectManifest(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(e)
-	// Get manifest SHA and content type based on request parameters
-	// commonRedirectManifest(1, manifest)
+func GetRedirectManifest(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	db, err := getDB(r)
+	if err != nil {
+		writeError(err, w)
+		return
+	}
+
+	mt, err := db.GetManifestTag(vars["manifestName"], vars["reference"])
+	if err != nil {
+		writeNotFound(err, w)
+		return
+	}
+
+	commonRedirectManifest(true, *mt, w)
 }
 
-func GetRedirectNamespacedManifest(_ http.ResponseWriter, _ *http.Request) {
-	// func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(e)
-	// Get manifest SHA and content type based on request parameters
-	// commonRedirectManifest(1, mt)
+func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	db, err := getDB(r)
+	if err != nil {
+		writeError(err, w)
+		return
+	}
+
+	mt, err := db.GetNamespacedManifestTag(vars["namespace"], vars["manifestName"], vars["reference"])
+	if err != nil {
+		writeNotFound(err, w)
+		return
+	}
+
+	commonRedirectManifest(true, *mt, w)
 }
 
-func commonRedirectManifest(hasBody bool, cfg config.Config, mt database.ManifestTag, w http.ResponseWriter) {
+func commonRedirectManifest(hasBody bool, mt database.ManifestTag, w http.ResponseWriter) {
 	if mt.ID != 0 {
-		url := urls.GetManifestURL(cfg, mt)
+		url := config.GetManifestURL(mt)
 		w.Header().Set("ETag", `"`+mt.Sha256+`"`)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Docker-Content-Digest", mt.Sha256)
@@ -183,17 +206,37 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 		// kick out with a 500 error.
 	}
 
-	ctx := r.Context()
-	f := ctx.Value(ConfigKey)
-	if f == nil {
-		// Kick out with a 500 error
+	nStr := r.FormValue("n")
+	var n int
+	if nStr != "" {
+		n, err = strconv.Atoi(nStr)
+		if err != nil {
+			// Kick out with a 500 error
+		}
 	}
 
-	bc, ok := f.(config.Config)
-	if !ok {
-		w.Write(ConfigError(errors.New("Configuration not loadable")))
-		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
-		return
+	db, err := getDB(r)
+
+	vars := mux.Vars(r)
+	tags, err := db.GetTags(vars["manifestName"], n, r.FormValue("last"))
+	if err != nil {
+		// Kick out with a 404 or 500 as appropriate.
+	}
+
+	jsonTags, err := json.Marshal(tags)
+	if err != nil {
+		// 500 error
+	}
+
+	w.Header().Set("Content-Type", `application/json`)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonTags)
+}
+
+func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		// kick out with a 500 error.
 	}
 
 	nStr := r.FormValue("n")
@@ -205,18 +248,22 @@ func GetTags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	db, err := getDB(r)
+
 	vars := mux.Vars(r)
-	db, _ := database.NewDatabase(&bc)
-	db.GetTags(vars["manifestName"], n, r.FormValue("last"))
-	// Print out JSON tag list
-}
+	tags, err := db.GetNamespacedTags(vars["namespace"], vars["manifestName"], n, r.FormValue("last"))
+	if err != nil {
+		// Kick out with a 404 or 500 as appropriate.
+	}
 
-func GetNamespacedTags(_ http.ResponseWriter, _ *http.Request) {
-	// func GetNamespacedTags(w http.ResponseWriter, r *http.Request) {
-	//	vars := mux.Vars(r)
+	jsonTags, err := json.Marshal(tags)
+	if err != nil {
+		// 500 error
+	}
 
-	// Get manifest SHA and content type based on request parameters
-	// Print out JSON tag list
+	w.Header().Set("Content-Type", `application/json`)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonTags)
 }
 
 // Routines up to this point are at least psuedocoded
