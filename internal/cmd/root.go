@@ -71,8 +71,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Turn on debug logging (default is false)")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
+func initConfigLocation() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigType("dotenv")
@@ -88,6 +87,11 @@ func initConfig() {
 		viper.AddConfigPath(executableDir)
 		viper.SetConfigName(".env")
 	}
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	initConfigLocation()
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
@@ -110,22 +114,31 @@ func initConfig() {
 		}
 	}
 
-	viper.SetEnvKeyReplacer(strings.NewReplacer("_", "."))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv() // read in environment variables that match
 
-	if !viper.IsSet("file.database") {
+	if viper.IsSet("file.database") {
+		viper.SetDefault("file.database", viper.Get("file.database"))
+	} else {
 		log.Println(newConfigError("FILE_DATABASE"))
 	}
 
-	if !viper.IsSet("registry.url.hostname") {
+	viper.SetDefault("file.htpasswd", "")
+
+	if viper.IsSet("registry.url.hostname") {
+		viper.SetDefault("registry.url.hostname", viper.Get("registry.url.hostname"))
+	} else {
 		log.Println(newConfigError("REGISTRY_URL_HOSTNAME"))
 	}
 
-	if !viper.IsSet("blob.directory") {
+	if viper.IsSet("blob.directory") {
+		viper.SetDefault("blob.directory", viper.Get("blob.directory"))
+	} else {
 		log.Println(newConfigError("BLOB_DIRECTORY"))
 	}
 
 	viper.SetDefault("registry.url.port", 80)
+	viper.SetDefault("registry.url.path", "/")
 	viper.SetDefault("registry.url.scheme", "http")
 
 	viper.SetDefault("blob.proxied", false)
@@ -139,5 +152,6 @@ func initConfig() {
 	}
 
 	viper.SetDefault("blob.url.port", 80)
+	viper.SetDefault("blob.url.path", "/blob")
 	viper.SetDefault("blob.url.scheme", "http")
 }
