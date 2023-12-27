@@ -76,7 +76,7 @@ jobs:
         with:
           file: ./docker/Dockerfile
           provenance: true
-          platforms: ${{ steps.qemu.outputs.platforms }}
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
