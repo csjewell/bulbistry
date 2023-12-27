@@ -46,7 +46,7 @@ type UnauthorizedDetails struct {
 func NoLogin(w http.ResponseWriter) {
 	ret, _ := json.Marshal(ResponseText{
 		Errors: []ErrorInfo{
-			ErrorInfo{
+			{
 				Code:    "DENIED",
 				Message: "Please provide username and password",
 				Details: nil,
@@ -65,7 +65,7 @@ func ConfigError(w http.ResponseWriter, err error) {
 
 	ret, _ := json.Marshal(ResponseText{
 		Errors: []ErrorInfo{
-			ErrorInfo{
+			{
 				Code:    "DENIED",
 				Message: str,
 				Details: nil,
@@ -82,7 +82,7 @@ func ConfigError(w http.ResponseWriter, err error) {
 func InvalidLogin(w http.ResponseWriter) {
 	ret, _ := json.Marshal(ResponseText{
 		Errors: []ErrorInfo{
-			ErrorInfo{
+			{
 				Code:    "DENIED",
 				Message: "Username or password is incorrect",
 				Details: nil,
@@ -99,7 +99,7 @@ func InvalidLogin(w http.ResponseWriter) {
 func RepositoryNotFound(w http.ResponseWriter, name string) {
 	ret, _ := json.Marshal(ResponseText{
 		Errors: []ErrorInfo{
-			ErrorInfo{
+			{
 				Code:    "NAME_UNKNOWN",
 				Message: "Repository named " + name + " cannot be found",
 				Details: nil,

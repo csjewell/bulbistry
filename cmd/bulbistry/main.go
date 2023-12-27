@@ -32,13 +32,10 @@ import (
 )
 
 var executionLog *tbv.Logger
-var debugLog *tbv.DebugLogger
 
 func main() {
 
-	executionLog = tbv.NewLogger(os.Stderr, nil)
-	debugLog = tbv.NewDebugLogger(executionLog)
-	debugLog.Print("Bulbistry started")
+	executionLog = tbv.NewLogger(os.Stdout, nil)
 
 	cmd.Execute()
 }
