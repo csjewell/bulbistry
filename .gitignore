@@ -22,6 +22,7 @@
 !revive.toml
 
 !docker/**
+!.github/**
 !/.dockerignore
 
 # !Makefile

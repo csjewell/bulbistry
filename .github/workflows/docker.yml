@@ -1,0 +1,82 @@
+name: Create and publish a Docker image
+
+# Configures this workflow to run every time a change is pushed to the branch called `release`.
+on:
+  push:
+    tags: 
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      print_tags:
+        description: 'True to print to STDOUT'
+        required: true
+        type: boolean
+      tags:
+        description: 'Test scenario tags'
+        required: true
+        type: string
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/csjewell/bulbistry            
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=ref
+            type=semver,pattern={{version}},event=tag
+            type=semver,pattern={{major}}.{{minor}},event=tag
+            type=semver,pattern={{major}},event=tag,enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=sha
+          labels: |
+            org.opencontainers.image.created={{date 'YYYY-MM-DD HH:mm:ssZ' tz='America/Denver'}}
+            org.opencontainers.image.authors=Curtis Jewell <swordsman@curtisjewell.name> and other contributors
+            org.opencontainers.image.url=https://github.com/csjewell/bulbistry
+            org.opencontainers.image.documentation=https://github.com/csjewell/bulbistry
+            org.opencontainers.image.source=https://github.com/csjewell/bulbistry
+            org.opencontainers.image.version={{version}}
+            org.opencontainers.image.revision={{sha}}
+            org.opencontainers.image.title=Bulbistry
+            org.opencontainers.image.description=Bulbistry minimal registry
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.base.name=cgr.dev/chainguard/static:latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: ./docker/Dockerfile
+          provenance: true
+          platforms: ${{ steps.qemu.outputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
