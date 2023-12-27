@@ -13,15 +13,11 @@
 !*.go
 !go.sum
 !go.mod
-!go.work
 
 !README.md
 !LICENSE.md
 
 !revive.toml
-
-!Dockerfile
-!/.dockerignore
 
 # !Makefile
 
