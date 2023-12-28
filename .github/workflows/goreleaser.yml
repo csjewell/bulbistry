@@ -9,10 +9,7 @@ on:
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      issues: write
+    permissions: write-all
 
     steps:
       - name: Checkout bulbistry
