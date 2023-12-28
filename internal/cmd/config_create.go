@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,11 +41,8 @@ var configCreateCmd = &cobra.Command{
 	Aliases: []string{"config", "create_config"},
 	Short:   "Creates a Bulbistry configuration",
 	Long:    `Creates a Bulbistry configuration interactively`,
-	Run: func(cmd *cobra.Command, _ []string) {
-		err := createConfig(cmd)
-		if err != nil {
-			slog.Error(err.Error())
-		}
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		return createConfig(cmd)
 	},
 }
 

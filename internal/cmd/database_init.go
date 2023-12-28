@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@ package cmd
 
 import (
 	"internal/database"
-	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,12 +34,8 @@ var databaseInitCmd = &cobra.Command{
 	Aliases: []string{"initialize"},
 	Short:   "Initializes the database",
 	Long:    `Initializes the bulbistry database to be ready to use by the server`,
-	Run: func(cmd *cobra.Command, args []string) {
-		err := initializeDatabase()
-		if err != nil {
-			log.Fatal("Database initialization failed: ", err)
-		}
-		log.Print("Database initialization completed")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return initializeDatabase()
 	},
 }
 
@@ -49,7 +44,7 @@ func init() {
 }
 
 func initializeDatabase() error {
-	db, err := database.NewDatabase(viper.GetString("database_file"))
+	db, err := database.NewDatabase(viper.GetString("file.database"))
 	if err != nil {
 		return err
 	}

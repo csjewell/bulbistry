@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,9 @@ var configShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Shows the current configuration",
 	Long:  `Shows the current configuration`,
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		return initConfig(true)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		settings := viper.AllKeys()
 

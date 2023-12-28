@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"log"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -33,12 +33,11 @@ var databaseCmd = &cobra.Command{
 	Aliases: []string{"db"},
 	Short:   "Database interaction",
 	Long:    `Operations that work on the bulbistry registry database`,
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Print("Error: Must specify whether to initialize or migrate the database.")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return errors.New("Must specify whether to initialize or migrate the database.")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(databaseCmd)
-	databaseCmd.PersistentFlags().String("file", "", "The database file to operate on")
 }

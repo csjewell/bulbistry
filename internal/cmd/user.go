@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"log"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -32,8 +32,8 @@ var userCmd = &cobra.Command{
 	Use:   "user",
 	Short: "Operations on the htpasswd file",
 	Long:  `...`,
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Fatal("Error: User needs added or deleted.")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return errors.New("User needs added or deleted.")
 	},
 }
 

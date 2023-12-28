@@ -50,7 +50,7 @@ jobs:
             type=sha
           labels: |
             org.opencontainers.image.created={{date 'YYYY-MM-DD HH:mm:ssZ' tz='America/Denver'}}
-            org.opencontainers.image.authors=Curtis Jewell <swordsman@curtisjewell.name> and other contributors
+            org.opencontainers.image.authors=Curtis Jewell <bulbistry@curtisjewell.name> and other contributors
             org.opencontainers.image.url=https://github.com/csjewell/bulbistry
             org.opencontainers.image.documentation=https://github.com/csjewell/bulbistry
             org.opencontainers.image.source=https://github.com/csjewell/bulbistry

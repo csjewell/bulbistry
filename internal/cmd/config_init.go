@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Curtis Jewell <swordsman@curtisjewell.name>
+Copyright © 2023 Curtis Jewell <bulbistry@curtisjewell.name>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,16 +32,13 @@ import (
 )
 
 // configInitCmd represents the configInit command
+// TODO: Add --reinit flag
 var configInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Writes out a basic configuration file",
 	Long:  `Writes out a basic configuration file to be edited and used`,
-	Run: func(cmd *cobra.Command, args []string) {
-		err := configInitialize()
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return configInitialize()
 	},
 }
 
