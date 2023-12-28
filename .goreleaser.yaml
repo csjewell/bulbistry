@@ -92,12 +92,12 @@ dockers:
     extra_files:
       - docker/blob
 
-docker_manifests:
-- name_template: "ghcr.io/csjewell/bulbistry:{{ .Version }}"
-  image_templates:
-  - "ghcr.io/csjewell/bulbistry:{{ .Version }}-amd64"
-  - "ghcr.io/csjewell/bulbistry:{{ .Version }}-arm64v8"
-  skip_push: auto
+#docker_manifests:
+#  - name_template: "ghcr.io/csjewell/bulbistry:{{ .Version }}"
+#    image_templates:
+#    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-amd64"
+#    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-arm64v8"
+#    skip_push: auto
 
 changelog:
   sort: asc
