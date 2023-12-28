@@ -82,7 +82,7 @@ dockers:
       - "--label=org.opencontainers.image.description=Bulbistry minimal registry"
       - "--label=org.opencontainers.image.licenses=MIT"
       - "--label=org.opencontainers.image.base.name=cgr.dev/chainguard/static:latest"
-      - "--platform=linux/amd64/v8"
+      - "--platform=linux/amd64"
 
     extra_files:
       - docker/blob
