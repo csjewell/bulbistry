@@ -16,8 +16,7 @@
 !go.work
 !go.work.sum
 
-!README.md
-!LICENSE.md
+!*.md
 
 !revive.toml
 
@@ -29,5 +28,6 @@
 
 # ...even if they are in subdirectories
 !*/
+dist/
 
 !.goreleaser.yaml

@@ -22,14 +22,20 @@ builds:
       - amd64
       - arm64
 
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Tag }}_checksums.txt"
+  algorithm: sha256
+
 source:
   enabled: true
-  prefix_template: "{{ .ProjectName }}-{{ .Version }}/"
+  name_template: "{{ .ProjectName }}-{{ .Tag }}"
+  prefix_template: "{{ .ProjectName }}-{{ .Tag }}/"
+  format: "tar.gz"
 
 archives:
   - format: tar.gz
     name_template: >-
-      {{ .ProjectName }}_
+      {{ .ProjectName }}_{{ .Tag }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
@@ -47,7 +53,9 @@ dockers:
     image_templates:
       - "ghcr.io/csjewell/bulbistry:latest-amd64"
       - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-amd64"
+# Uncomment this line when we get to v0.1.0.
 #      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
+# Uncomment this line when we get to v1.0.0.
 #      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
 
     # Skips the docker push.
@@ -85,7 +93,9 @@ dockers:
     image_templates:
       - "ghcr.io/csjewell/bulbistry:latest-arm64v8"
       - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-arm64v8"
+# Uncomment this line when we get to v0.1.0.
 #      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
+# Uncomment this line when we get to v1.0.0.
 #      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
 
     skip_push: auto
@@ -123,6 +133,18 @@ docker_manifests:
     - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-amd64"
     - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-arm64v8"
     skip_push: auto
+# Uncomment this block when we get to v0.1.0.
+#  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
+#    image_templates:
+#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
+#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
+#    skip_push: auto
+# Uncomment this block when we get to v1.0.0.
+#  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+#    image_templates:
+#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
+#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
+#    skip_push: auto
 
 changelog:
   sort: asc
