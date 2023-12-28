@@ -12,7 +12,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    - grep -qf '{{ .Tag }}' internal/version/version.go 
+    - grep -qF '"{{ .Tag }}"' internal/version/version.go 
 
 builds:
   - main: ./cmd/bulbistry/main.go
