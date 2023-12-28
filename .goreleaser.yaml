@@ -31,6 +31,74 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
+dockers:
+  - goos: linux
+    goarch: amd64
+
+    image_templates:
+      - "ghcr.io/csjewell/bulbistry:latest"
+      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+
+    # Skips the docker push.
+    # Could be useful if you also do draft releases.
+    #
+    # If set to auto, the release will not be pushed to the Docker repository
+    #  in case there is an indicator of a prerelease in the tag, e.g. v1.0.0-rc1.
+    skip_push: auto
+
+    dockerfile: "docker/Dockerfile"
+
+    use: docker 
+
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm64"
+
+    extra_files:
+      - docker/blob
+
+  - goos: linux
+    goarch: arm64
+
+    image_templates:
+      - "ghcr.io/csjewell/bulbistry:latest"
+      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+
+    # Skips the docker push.
+    # Could be useful if you also do draft releases.
+    #
+    # If set to auto, the release will not be pushed to the Docker repository
+    #  in case there is an indicator of a prerelease in the tag, e.g. v1.0.0-rc1.
+    skip_push: auto
+
+    dockerfile: "docker/Dockerfile"
+
+    use: docker 
+
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm64"
+
+    extra_files:
+      - docker/blob
+
+docker_manifests:
+- name_template: "ghcr.io/csjewell/bulbistry:{{ .Version }}"
+  image_templates:
+  - "ghcr.io/csjewell/bulbistry:{{ .Version }}-amd64"
+  - "ghcr.io/csjewell/bulbistry:{{ .Version }}-arm64v8"
+  skip_push: auto
+
 changelog:
   sort: asc
   filters:
