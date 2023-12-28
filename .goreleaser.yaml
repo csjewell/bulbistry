@@ -36,10 +36,10 @@ dockers:
     goarch: amd64
 
     image_templates:
-      - "ghcr.io/csjewell/bulbistry:latest"
-      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}"
-      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
-      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+      - "ghcr.io/csjewell/bulbistry:latest-amd64"
+      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-amd64"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
 
     # Skips the docker push.
     # Could be useful if you also do draft releases.
@@ -66,10 +66,10 @@ dockers:
     goarch: arm64
 
     image_templates:
-      - "ghcr.io/csjewell/bulbistry:latest"
-      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}"
-      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
-      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+      - "ghcr.io/csjewell/bulbistry:latest-arm64v8"
+      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-arm64v8"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
 
     # Skips the docker push.
     # Could be useful if you also do draft releases.
@@ -92,12 +92,27 @@ dockers:
     extra_files:
       - docker/blob
 
-#docker_manifests:
-#  - name_template: "ghcr.io/csjewell/bulbistry:{{ .Version }}"
-#    image_templates:
-#    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-amd64"
-#    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-arm64v8"
-#    skip_push: auto
+docker_manifests:
+  - name_template: "ghcr.io/csjewell/bulbistry:latest"
+    image_templates:
+    - "ghcr.io/csjewell/bulbistry:latest-amd64"
+    - "ghcr.io/csjewell/bulbistry:latest-arm64v8"
+    skip_push: auto
+  - name_template: "ghcr.io/csjewell/bulbistry:{{ .Version }}"
+    image_templates:
+    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-amd64"
+    - "ghcr.io/csjewell/bulbistry:{{ .Version }}-arm64v8"
+    skip_push: auto
+  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
+    image_templates:
+    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
+    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
+    skip_push: auto
+  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
+    image_templates:
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
+      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
+    skip_push: auto
 
 changelog:
   sort: asc
