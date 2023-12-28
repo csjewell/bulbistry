@@ -24,7 +24,7 @@ package version
 
 // Returns the application version
 func Version() string {
-	return "v0.0.16"
+	return "v0.0.17"
 }
 
 // Returns the database version
