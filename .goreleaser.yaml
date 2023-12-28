@@ -12,6 +12,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+    - grep -qf '{{ .Tag }}' internal/version/version.go 
 
 builds:
   - main: ./cmd/bulbistry/main.go
@@ -34,10 +35,10 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
-#sboms:
-#  - artifacts: archive
-#    documents:
-#      - "${artifact}.spdx.sbom"
+sboms:
+  - artifacts: archive
+    documents:
+      - "${artifact}.spdx.sbom"
 
 dockers:
   - goos: linux
