@@ -1,6 +1,6 @@
 module github.com/csjewell/bulbistry
 
-go 1.21.5
+go 1.25
 
 require (
 	internal/config v0.0.0

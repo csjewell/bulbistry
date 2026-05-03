@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"internal/database"
+	"github.com/csjewell/bulbistry/internal/database"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

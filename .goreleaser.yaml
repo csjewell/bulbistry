@@ -6,21 +6,25 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
+project_name: bulbistry
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
     - grep -qF '"{{ .Tag }}"' internal/version/version.go 
 
 builds:
   - main: ./cmd/bulbistry/main.go
     goos: 
-    - linux
+      - linux
     goarch:
       - amd64
       - arm64
+    goamd64:
+      - v2
+      - v3
+    
 
 checksum:
   name_template: "{{ .ProjectName }}-{{ .Tag }}_checksums.txt"
@@ -33,7 +37,7 @@ source:
   format: "tar.gz"
 
 archives:
-  - format: tar.gz
+  - formats: ["tar.gz"]
     name_template: >-
       {{ .ProjectName }}-{{ .Tag }}_
       {{- if eq .Arch "amd64" }}x86_64
@@ -46,104 +50,37 @@ sboms:
     documents:
       - "${artifact}.spdx.sbom"
 
-dockers:
-  - goos: linux
-    goarch: amd64
+dockers_v2:
+  - images:
+      - "ghcr.io/csjewell/bulbistry"
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if .IsNightly }}nightly{{ end }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+    labels:
+      "org.opencontainers.image.description": "Bulbistry minimal registry"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+#      "org.opencontainers.image.source": "{{.GitURL}}"
+      "org.opencontainers.image.source": "https://github.com/csjewell/bulbistry"
+      "org.opencontainers.image.url": "https://github.com/csjewell/bulbistry"
+      "org.opencontainers.image.documentation": "https://github.com/csjewell/bulbistry"
+      "org.opencontainers.image.authors": "Curtis Jewell <bulbistry@curtisjewell.name> and other contributors"
+      "org.opencontainers.image.title": "Bulbistry"
+      "org.opencontainers.image.licenses": "MIT"
+      "org.opencontainers.image.base.name": "cgr.dev/chainguard/static:latest"
 
-    image_templates:
-      - "ghcr.io/csjewell/bulbistry:latest-amd64"
-      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-amd64"
-# Uncomment this line when we get to v0.1.0.
-#      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
-# Uncomment this line when we get to v1.0.0.
-#      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
 
-    # Skips the docker push.
-    # Could be useful if you also do draft releases.
-    #
-    # If set to auto, the release will not be pushed to the Docker repository
-    #  in case there is an indicator of a prerelease in the tag, e.g. v1.0.0-rc1.
-    skip_push: auto
 
-    dockerfile: "docker/Dockerfile"
+#    dockerfile: "docker/Dockerfile"
 
-    use: buildx 
+#    use: buildx 
 
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.authors=Curtis Jewell <bulbistry@curtisjewell.name> and other contributors"
-      - "--label=org.opencontainers.image.url=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.documentation=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.source=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.title=Bulbistry"
-      - "--label=org.opencontainers.image.description=Bulbistry minimal registry"
-      - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.base.name=cgr.dev/chainguard/static:latest"
-      - "--platform=linux/amd64"
+#    extra_files:
+#      - docker/blob
 
-    extra_files:
-      - docker/blob
-
-  - goos: linux
-    goarch: arm64
-
-    image_templates:
-      - "ghcr.io/csjewell/bulbistry:latest-arm64v8"
-      - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-arm64v8"
-# Uncomment this line when we get to v0.1.0.
-#      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
-# Uncomment this line when we get to v1.0.0.
-#      - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
-
-    skip_push: auto
-
-    dockerfile: "docker/Dockerfile"
-
-    use: buildx 
-
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.authors=Curtis Jewell <bulbistry@curtisjewell.name> and other contributors"
-      - "--label=org.opencontainers.image.url=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.documentation=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.source=https://github.com/csjewell/bulbistry"
-      - "--label=org.opencontainers.image.title=Bulbistry"
-      - "--label=org.opencontainers.image.description=Bulbistry minimal registry"
-      - "--label=org.opencontainers.image.licenses=MIT"
-      - "--label=org.opencontainers.image.base.name=cgr.dev/chainguard/static:latest"
-      - "--platform=linux/arm64/v8"
-
-    extra_files:
-      - docker/blob
-
-docker_manifests:
-  - name_template: "ghcr.io/csjewell/bulbistry:latest"
-    image_templates:
-    - "ghcr.io/csjewell/bulbistry:latest-amd64"
-    - "ghcr.io/csjewell/bulbistry:latest-arm64v8"
-    skip_push: auto
-  - name_template: "ghcr.io/csjewell/bulbistry:{{ .Tag }}"
-    image_templates:
-    - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-amd64"
-    - "ghcr.io/csjewell/bulbistry:{{ .Tag }}-arm64v8"
-    skip_push: auto
-# Uncomment this block when we get to v0.1.0.
-#  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}"
-#    image_templates:
-#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-amd64"
-#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}.{{ .Minor }}-arm64v8"
-#    skip_push: auto
-# Uncomment this block when we get to v1.0.0.
-#  - name_template: "ghcr.io/csjewell/bulbistry:v{{ .Major }}"
-#    image_templates:
-#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-amd64"
-#    - "ghcr.io/csjewell/bulbistry:v{{ .Major }}-arm64v8"
 #    skip_push: auto
 
 changelog:

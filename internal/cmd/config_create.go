@@ -51,7 +51,7 @@ func init() {
 }
 
 // createConfig creates the bulbistry configuration in an interactive fashion.
-func createConfig(cmd *cobra.Command) error {
+func createConfig(_ *cobra.Command) error {
 
 	validateFile := func(input string) error {
 		if input == "" {
@@ -87,7 +87,7 @@ func createConfig(cmd *cobra.Command) error {
 		return fmt.Errorf("Did not get registry URL %v\n", err)
 	}
 
-	urlRegistry, _ := url.Parse(urlString)
+	urlRegistry, err := url.Parse(urlString)
 	if err != nil {
 		return fmt.Errorf("Registry URL was not a URL: %v", err)
 	}

@@ -23,7 +23,7 @@ THE SOFTWARE.
 package database
 
 import (
-	v "internal/version"
+	v "github.com/csjewell/bulbistry/internal/version"
 
 	"database/sql"
 	"errors"

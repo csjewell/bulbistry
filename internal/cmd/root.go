@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	v "internal/version"
+	v "github.com/csjewell/bulbistry/internal/version"
 
 	"errors"
 	"log/slog"
@@ -103,7 +103,7 @@ func initConfig(_ bool) error {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		slog.Info("Using config file:", viper.ConfigFileUsed())
+		slog.Info("Using config file:", "config_file", viper.ConfigFileUsed())
 
 		settingKeys := viper.AllKeys()
 		settings := make(map[string]any, 50)

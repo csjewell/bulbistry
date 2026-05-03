@@ -165,7 +165,7 @@ func (conn *connection) getAuthHeader(resp *req.Response) {
 	}
 }
 
-func download(cmd *cobra.Command, args []string) {
+func download(_ *cobra.Command, args []string) {
 	if len(args) < 1 {
 		cobra.CheckErr(fmt.Errorf("bulbistry-dl needs a package to download"))
 	}
@@ -242,11 +242,12 @@ func download(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if ct == manifestlist.MediaTypeManifestList {
+	switch ct {
+	case manifestlist.MediaTypeManifestList:
 		processManifestList(conn, manifest)
-	} else if ct == v1.MediaTypeImageIndex {
+	case v1.MediaTypeImageIndex:
 		processManifestIndex(conn, manifest)
-	} else {
+	default:
 		processManifest(conn, manifest)
 	}
 
@@ -259,7 +260,7 @@ func download(cmd *cobra.Command, args []string) {
 
 }
 
-func processManifestIndex(conn connection, manifest distribution.Manifest) {
+func processManifestIndex(_ connection, _ distribution.Manifest) {
 
 	i := 1
 	i = i + 2

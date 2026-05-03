@@ -57,7 +57,6 @@ func NoLogin(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", `application/json`)
 	w.WriteHeader(http.StatusUnauthorized)
 	w.Write(ret)
-	return
 }
 
 func ConfigError(w http.ResponseWriter, err error) {
@@ -76,7 +75,6 @@ func ConfigError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", `application/json`)
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write(ret)
-	return
 }
 
 func InvalidLogin(w http.ResponseWriter) {
@@ -93,7 +91,6 @@ func InvalidLogin(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", `application/json`)
 	w.WriteHeader(http.StatusUnauthorized)
 	w.Write(ret)
-	return
 }
 
 func RepositoryNotFound(w http.ResponseWriter, name string) {
@@ -110,7 +107,6 @@ func RepositoryNotFound(w http.ResponseWriter, name string) {
 	w.Header().Set("Content-Type", `application/json`)
 	w.WriteHeader(http.StatusNotFound)
 	w.Write(ret)
-	return
 }
 
 //func Unauthorized(usernameAttempted string, usernameAllowed string) ResponseText {

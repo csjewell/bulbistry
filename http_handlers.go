@@ -89,7 +89,7 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func getDB(r *http.Request) (*database.Database, error) {
+func getDB(_ *http.Request) (*database.Database, error) {
 	db, err := database.NewDatabase(viper.GetString("database_file"))
 	if err != nil {
 		return nil, err

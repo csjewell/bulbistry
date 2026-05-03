@@ -26,9 +26,9 @@ package config
 import (
 	"errors"
 	"fmt"
-	"internal/database"
 	"net/url"
 
+	"github.com/csjewell/bulbistry/internal/database"
 	"github.com/spf13/viper"
 )
 
