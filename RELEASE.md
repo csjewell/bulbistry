@@ -1,7 +1,7 @@
-Soon releasing will be as easy as
-    git commit *version bump* ; git tag v0.0.20; git push
+To release a new version:
+    git commit *version bump*
+    git next-tag
 
-But until then,
-    git commit *version bump* ; git tag v0.0.20; git push; git status #*to check for cleanliness*
-    goreleaser release --clean
+Github actions will generate the packages from there.
 
+Right now *git-next-tag* is a shell-script. I plan to make it a go command soon enough.
