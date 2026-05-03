@@ -25,21 +25,20 @@ package bulbistry
 // This generates version 5 UUID's based on the URL.
 
 import (
-	"internal/config"
-	"internal/database"
+	"internal"
 
 	"github.com/google/uuid"
 )
 
-func GenerateManifestUUID(mt database.ManifestTag) (string, error) {
-	url := config.GetManifestURL(mt)
+func GenerateManifestUUID(mt internal.ManifestTag) (string, error) {
+	url := internal.GetManifestURL(mt)
 
 	return uuid.NewSHA1(uuid.NameSpaceURL, []byte(url)).String(), nil
 }
 
 func GenerateBlobUUID(manifestName string, reference string) (string, error) {
 
-	//	url := cfg.GetExternalURL()
+	//	url := internal.GetExternalURL()
 	//	url = url + manifestName + "/blobs/" + reference
 
 	// return uuid.NewSHA1(uuid.NameSpaceURL, []byte(url)).String(), nil

@@ -23,14 +23,13 @@ THE SOFTWARE.
 package bulbistry
 
 import (
-	"internal/config"
-	"internal/database"
-
 	"context"
 	"encoding/json"
 
 	//"fmt"
+	i "internal"
 	"net/http"
+
 	//"strings"
 	"strconv"
 	//"time"
@@ -89,8 +88,8 @@ func (ba *BasicAuth) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func getDB(r *http.Request) (*database.Database, error) {
-	db, err := database.NewDatabase(viper.GetString("database_file"))
+func getDB(_ *http.Request) (*i.Database, error) {
+	db, err := i.NewDatabase(viper.GetString("database_file"))
 	if err != nil {
 		return nil, err
 	}
@@ -182,9 +181,9 @@ func GetRedirectNamespacedManifest(w http.ResponseWriter, r *http.Request) {
 	commonRedirectManifest(true, *mt, w)
 }
 
-func commonRedirectManifest(hasBody bool, mt database.ManifestTag, w http.ResponseWriter) {
+func commonRedirectManifest(hasBody bool, mt i.ManifestTag, w http.ResponseWriter) {
 	if mt.ID != 0 {
-		url := config.GetManifestURL(mt)
+		url := i.GetManifestURL(mt)
 		w.Header().Set("ETag", `"`+mt.Sha256+`"`)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Docker-Content-Digest", mt.Sha256)

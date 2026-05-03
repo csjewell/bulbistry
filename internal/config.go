@@ -21,12 +21,11 @@ THE SOFTWARE.
 */
 
 // The code that handles the parsed configuration for Bulbistry
-package config
+package internal
 
 import (
 	"errors"
 	"fmt"
-	"internal/database"
 	"net/url"
 
 	"github.com/spf13/viper"
@@ -90,7 +89,7 @@ func CheckConfig() error {
 }
 
 // GetManifestURL gets the URL to retrieve a particular manifest
-func GetManifestURL(mt database.ManifestTag) string {
+func GetManifestURL(mt ManifestTag) string {
 	if mt.Namespace == "" {
 		return GetExternalURL().JoinPath(mt.Name, "/manifest/", mt.Sha512).String()
 	}

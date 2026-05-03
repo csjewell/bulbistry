@@ -19,21 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-// The command bulbistry implements a minimal compliant OCI container registry
-// suitable for self-hosting in containers.
-package main
+package internal
 
 import (
-	"os"
+	"errors"
 
-	tbv "github.com/csjewell/bulbistry"
+	"github.com/spf13/cobra"
 )
 
-var executionLog *tbv.Logger
+// userAddCmd represents the user add command
+var userAddCmd = &cobra.Command{
+	Use:   "add",
+	Short: "...",
+	Long:  `...`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return errors.New("User add not implemented at this time")
+	},
+}
 
-func main() {
-
-	executionLog = tbv.NewLogger(os.Stdout, nil)
-
-	tbv.Command().Execute()
+func init() {
+	userCmd.AddCommand(userAddCmd)
 }

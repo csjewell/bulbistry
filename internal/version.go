@@ -19,24 +19,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
 
-import (
-	"errors"
+package internal
 
-	"github.com/spf13/cobra"
-)
-
-// userAddCmd represents the user add command
-var userAddCmd = &cobra.Command{
-	Use:   "add",
-	Short: "...",
-	Long:  `...`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("User add not implemented at this time")
-	},
+// Returns the application version
+func Version() string {
+	return "v0.0.21"
 }
 
-func init() {
-	userCmd.AddCommand(userAddCmd)
+// Returns the database version
+func DatabaseVersion() string {
+	return "0.0"
 }

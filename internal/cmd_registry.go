@@ -19,47 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
-	"fmt"
-	"sort"
-	"strings"
+	"errors"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-// configShowCmd represents the configShow command
-var configShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Shows the current configuration",
-	Long:  `Shows the current configuration`,
-	PreRunE: func(_ *cobra.Command, _ []string) error {
-		return initConfig(true)
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		settings := viper.AllKeys()
-
-		settingsSimple := make(map[string]string, len(settings))
-
-		for _, key := range settings {
-			envName := strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
-			settingsSimple[envName] = fmt.Sprint(viper.Get(key))
-		}
-
-		keys := make(sort.StringSlice, 0, len(settingsSimple))
-		for k := range settingsSimple {
-			keys = append(keys, k)
-		}
-		keys.Sort()
-
-		for _, k := range keys {
-			fmt.Println(k, "value is:", settingsSimple[k])
-		}
+// registryCmd represents the registry command
+var registryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "Operations on the bulbistry registry",
+	Long:  `...`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return errors.New("Must specify 'pull' and a container to pull")
 	},
 }
 
 func init() {
-	configCmd.AddCommand(configShowCmd)
+	RootCmd.AddCommand(registryCmd)
 }

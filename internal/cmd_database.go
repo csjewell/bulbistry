@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
 	"errors"
@@ -27,16 +27,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// userCmd represents the registry command
-var userCmd = &cobra.Command{
-	Use:   "user",
-	Short: "Operations on the htpasswd file",
-	Long:  `...`,
+// databaseCmd represents the database command
+var databaseCmd = &cobra.Command{
+	Use:     "database",
+	Aliases: []string{"db"},
+	Short:   "Database interaction",
+	Long:    `Operations that work on the bulbistry registry database`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("User needs added or deleted.")
+		return errors.New("Must specify whether to initialize or migrate the database.")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(userCmd)
+	RootCmd.AddCommand(databaseCmd)
 }

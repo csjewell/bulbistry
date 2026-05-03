@@ -20,11 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package database
+package internal
 
 import (
-	v "internal/version"
-
 	"database/sql"
 	"errors"
 	"strings"
@@ -103,7 +101,7 @@ func (r Database) InitializeDatabase() error {
 
 	query = "INSERT INTO tbv_dbversion (db_version) VALUES (?)"
 
-	_, err = r.db.Exec(query, v.DatabaseVersion())
+	_, err = r.db.Exec(query, DatabaseVersion())
 	if err != nil {
 		return err
 	}

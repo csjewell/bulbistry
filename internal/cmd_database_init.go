@@ -19,15 +19,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+package internal
 
-package version
+import (
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
 
-// Returns the application version
-func Version() string {
-	return "v0.0.21"
+// databaseInitCmd represents the "database init" command
+var databaseInitCmd = &cobra.Command{
+	Use:     "init",
+	Aliases: []string{"initialize"},
+	Short:   "Initializes the database",
+	Long:    `Initializes the bulbistry database to be ready to use by the server`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return initializeDatabase()
+	},
 }
 
-// Returns the database version
-func DatabaseVersion() string {
-	return "0.0"
+func init() {
+	databaseCmd.AddCommand(databaseInitCmd)
+}
+
+func initializeDatabase() error {
+	db, err := NewDatabase(viper.GetString("file.database"))
+	if err != nil {
+		return err
+	}
+
+	if err = db.InitializeDatabase(); err != nil {
+		return err
+	}
+
+	return nil
 }

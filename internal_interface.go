@@ -19,25 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+
+package bulbistry
+
+// This is the external interface to internal things.
 
 import (
-	"errors"
+	"internal"
+	"net/url"
 
 	"github.com/spf13/cobra"
 )
 
-// databaseCmd represents the database command
-var databaseCmd = &cobra.Command{
-	Use:     "database",
-	Aliases: []string{"db"},
-	Short:   "Database interaction",
-	Long:    `Operations that work on the bulbistry registry database`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("Must specify whether to initialize or migrate the database.")
-	},
+func Command() *cobra.Command {
+	return internal.RootCmd
 }
 
-func init() {
-	rootCmd.AddCommand(databaseCmd)
+func GetListenOn() string {
+	return internal.GetListenOn()
+}
+
+func GetExternalOrigin() *url.URL {
+	return internal.GetExternalOrigin()
 }

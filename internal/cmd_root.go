@@ -19,11 +19,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
-	v "internal/version"
-
 	"errors"
 	"log/slog"
 	"os"
@@ -34,13 +32,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-type bulbistryConfigError struct {
+type configError struct {
 	configKeys []string
 	error
 }
 
-func newConfigError(keys []string) bulbistryConfigError {
-	return bulbistryConfigError{
+func rootConfigError(keys []string) configError {
+	return configError{
 		keys,
 		errors.New("configuration entry required: " + strings.Join(keys, ", ")),
 	}
@@ -49,12 +47,12 @@ func newConfigError(keys []string) bulbistryConfigError {
 var cfgFile string
 var debugLogging bool
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
 	Use:     "bulbistry",
-	Version: v.Version(),
+	Version: Version(),
 	Short:   "A pared-down container registry server, perfect for self-hosting",
-	Long: `bulbistry version ` + v.Version() + `
+	Long: `bulbistry version ` + Version() + `
 	A pared-down (soon to be OCI-compliant) container registry server, perfect for self-hosting.
 	By default, it starts the server on the port specified in the configuration or the environment.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -68,7 +66,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -76,8 +74,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bulbistry/env)")
-	rootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Turn on debug logging (default is false)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bulbistry/env)")
+	RootCmd.PersistentFlags().BoolVar(&debugLogging, "debug", false, "Turn on debug logging (default is false)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -103,7 +101,7 @@ func initConfig(_ bool) error {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		slog.Info("Using config file:", viper.ConfigFileUsed())
+		slog.Info("Using config file:", "config_file", viper.ConfigFileUsed())
 
 		settingKeys := viper.AllKeys()
 		settings := make(map[string]any, 50)
@@ -166,7 +164,7 @@ func initConfig(_ bool) error {
 	viper.SetDefault("blob.url.scheme", "http")
 
 	if len(configKeyErr) > 0 {
-		return newConfigError(configKeyErr)
+		return rootConfigError(configKeyErr)
 	}
 
 	return nil

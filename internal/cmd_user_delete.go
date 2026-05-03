@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
 	"errors"
@@ -27,16 +27,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// registryCmd represents the registry command
-var registryCmd = &cobra.Command{
-	Use:   "registry",
-	Short: "Operations on the bulbistry registry",
+// userDeleteCmd represents the user delete command
+var userDeleteCmd = &cobra.Command{
+	Use:   "delete",
+	Short: "...",
 	Long:  `...`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("Must specify 'pull' and a container to pull")
+		return errors.New("User delete not implemented at this time")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(registryCmd)
+	userCmd.AddCommand(userDeleteCmd)
 }

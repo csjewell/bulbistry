@@ -19,39 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
-	"internal/database"
+	"errors"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-// databaseInitCmd represents the "database init" command
-var databaseInitCmd = &cobra.Command{
-	Use:     "init",
-	Aliases: []string{"initialize"},
-	Short:   "Initializes the database",
-	Long:    `Initializes the bulbistry database to be ready to use by the server`,
+// migrateCmd represents the migrate command
+var migrateCmd = &cobra.Command{
+	Use:   "migrate",
+	Short: "Migrate the database between schema versions",
+	Long:  `Migrate the database between schema versions`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return initializeDatabase()
+		return errors.New("Migration not needed at this time")
 	},
 }
 
 func init() {
-	databaseCmd.AddCommand(databaseInitCmd)
-}
-
-func initializeDatabase() error {
-	db, err := database.NewDatabase(viper.GetString("file.database"))
-	if err != nil {
-		return err
-	}
-
-	if err = db.InitializeDatabase(); err != nil {
-		return err
-	}
-
-	return nil
+	databaseCmd.AddCommand(migrateCmd)
 }

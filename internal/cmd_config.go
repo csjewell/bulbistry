@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
 	"errors"
@@ -27,16 +27,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// migrateCmd represents the migrate command
-var migrateCmd = &cobra.Command{
-	Use:   "migrate",
-	Short: "Migrate the database between schema versions",
-	Long:  `Migrate the database between schema versions`,
+// configCmd represents the config command
+var configCmd = &cobra.Command{
+	Use:     "config",
+	Aliases: []string{"cfg"},
+	Short:   "Configure bulbistry",
+	Long:    `Operations that help in configuring bulbistry.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("Migration not needed at this time")
+		return errors.New("Must either create, initialize, or show the bulbistry configuration")
 	},
 }
 
 func init() {
-	databaseCmd.AddCommand(migrateCmd)
+	RootCmd.AddCommand(configCmd)
 }

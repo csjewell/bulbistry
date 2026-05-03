@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
 	"errors"
@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	// db "internal/database"
 	"github.com/distribution/distribution/v3"
 	"github.com/distribution/distribution/v3/manifest/manifestlist"
 
@@ -165,7 +164,7 @@ func (conn *connection) getAuthHeader(resp *req.Response) {
 	}
 }
 
-func download(cmd *cobra.Command, args []string) {
+func download(_ *cobra.Command, args []string) {
 	if len(args) < 1 {
 		cobra.CheckErr(fmt.Errorf("bulbistry-dl needs a package to download"))
 	}
@@ -242,11 +241,12 @@ func download(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if ct == manifestlist.MediaTypeManifestList {
+	switch ct {
+	case manifestlist.MediaTypeManifestList:
 		processManifestList(conn, manifest)
-	} else if ct == v1.MediaTypeImageIndex {
+	case v1.MediaTypeImageIndex:
 		processManifestIndex(conn, manifest)
-	} else {
+	default:
 		processManifest(conn, manifest)
 	}
 
@@ -259,7 +259,7 @@ func download(cmd *cobra.Command, args []string) {
 
 }
 
-func processManifestIndex(conn connection, manifest distribution.Manifest) {
+func processManifestIndex(_ connection, _ distribution.Manifest) {
 
 	i := 1
 	i = i + 2
@@ -268,10 +268,11 @@ func processManifestIndex(conn connection, manifest distribution.Manifest) {
 	// ProcessManifest(conn, text)
 }
 
-func processManifestList(conn connection, manifest distribution.Manifest) {
+func processManifestList(_ connection, manifest distribution.Manifest) {
 
-	for _, subManifest := range manifest.References() {
-		retrieveManifest(conn, subManifest)
+	// for _, subManifest := range manifest.References() {
+	for range manifest.References() {
+		// retrieveManifest(conn, subManifest)
 	}
 }
 
@@ -339,8 +340,9 @@ func retrieveManifest(conn connection, subManifest distribution.Describable) {
 	processManifest(conn, manifest)
 }
 
-func processManifest(conn connection, manifest distribution.Manifest) {
-	for _, blob := range manifest.References() {
-		retrieveBlob(conn, blob)
+func processManifest(_ connection, manifest distribution.Manifest) {
+	// for _, blob := range manifest.References() {
+	for range manifest.References() {
+		// retrieveBlob(conn, blob)
 	}
 }

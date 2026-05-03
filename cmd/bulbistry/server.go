@@ -22,11 +22,11 @@ THE SOFTWARE.
 package main
 
 import (
-	"internal/config"
 	"net/http"
 	"time"
 
 	tbv "github.com/csjewell/bulbistry"
+
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,7 +49,7 @@ func RunServer(cmd *cobra.Command) error {
 	r := mux.NewRouter().StrictSlash(false).SkipClean(true).UseEncodedPath()
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", config.GetExternalOrigin().String())
+		w.Header().Set("Access-Control-Allow-Origin", tbv.GetExternalOrigin().String())
 		w.Header().Set("Access-Control-Max-Age", "86400")
 	}).Methods(http.MethodOptions)
 	r.Use(mux.CORSMethodMiddleware(r))
@@ -105,7 +105,7 @@ func RunServer(cmd *cobra.Command) error {
 
 	svr := &http.Server{
 		Handler:        r,
-		Addr:           config.GetListenOn(),
+		Addr:           tbv.GetListenOn(),
 		ReadTimeout:    120 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		IdleTimeout:    120 * time.Second,
@@ -119,5 +119,4 @@ func RunServer(cmd *cobra.Command) error {
 
 func handlerNotFound(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
-	return
 }

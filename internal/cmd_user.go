@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package internal
 
 import (
 	"errors"
@@ -27,17 +27,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// configCmd represents the config command
-var configCmd = &cobra.Command{
-	Use:     "config",
-	Aliases: []string{"cfg"},
-	Short:   "Configure bulbistry",
-	Long:    `Operations that help in configuring bulbistry.`,
+// userCmd represents the registry command
+var userCmd = &cobra.Command{
+	Use:   "user",
+	Short: "Operations on the htpasswd file",
+	Long:  `...`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return errors.New("Must either create, initialize, or show the bulbistry configuration")
+		return errors.New("User needs added or deleted.")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(configCmd)
+	RootCmd.AddCommand(userCmd)
 }
